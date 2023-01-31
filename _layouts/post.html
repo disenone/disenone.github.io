@@ -47,15 +47,32 @@ layout: default
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
 
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为
+                    <a href="{{site.url}}" style = "color:#51aded;"> {{site.title}} </a>
+                    原创，转载请注明出处来自
+                    <a href ="{{page.url}}" style = "color:#51aded;"> {{page.title}} </a>。
+                </p>
+
+                <hr>
+                
                 {{ content }}
 
                 <hr>
+
+                
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为
+                    <a href="{{site.url}}" style = "color:#51aded;"> {{site.title}} </a>
+                    原创，转载请注明出处来自
+                    <a href ="{{page.url}}" style = "color:#51aded;"> {{page.title}} </a>。
+                </p>
 
                 <ul class="pager">
                     {% if page.previous.url %}
                     <li class="previous">
                         <a href="{{ page.previous.url | prepend: site.baseurl | replace: '//', '/' }}" data-toggle="tooltip" data-placement="top" title="{{page.previous.title}}">
-                            Previous<br>
+                            前一篇<br>
                             <span>{{page.previous.title}}</span>
                         </a>
                     </li>
@@ -63,7 +80,7 @@ layout: default
                     {% if page.next.url %}
                     <li class="next">
                         <a href="{{ page.next.url | prepend: site.baseurl | replace: '//', '/' }}" data-toggle="tooltip" data-placement="top" title="{{page.next.title}}">
-                            Next<br>
+                            后一篇<br>
                             <span>{{page.next.title}}</span>
                         </a>
                     </li>
@@ -103,14 +120,39 @@ layout: default
                 </script> -->
 
                 <!-- Valine comment -->
-                <div id="vcomments"></div>
+                <!-- <div id="vcomments"></div>
                 <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
                 <script>
                     new Valine({
                         el: '#vcomments',
                         appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
-                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7'
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
                     })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="<{{page.url}}>" class="leancloud_visitors" data-flag-title="{{page.title}}">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
                 </script>
             </div>
 

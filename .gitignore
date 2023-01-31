@@ -12,3 +12,5 @@ Thumbs.db
 .jekyll-cache
 
 Gemfile.lock
+
+.vscode
