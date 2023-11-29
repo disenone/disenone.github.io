@@ -68,8 +68,16 @@ bing_verify:
 
 # Links to include in footer navigation
 
-
 # emoji shortcodes: https://www.webfx.com/tools/emoji-cheat-sheet/
-plugins: [jekyll-paginate, jemoji]
+plugins: [jekyll-paginate, jemoji, jekyll-polyglot]
 
 permalink: /:year/:month/:day/:title 
+
+# jekyll-polyglot config
+languages: ["zh", "en"]
+default_lang: "zh"
+exclude_from_localization: ["css", "img", "js", "less"]
+parallel_localization: false
+
+sass:
+  sourcemap: never

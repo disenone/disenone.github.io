@@ -6,3 +6,12 @@ title : Sitemap
 {{site.url}}{{ page.url }}{% endfor %}
 {% for post in site.posts %}
 {{site.url}}{{ post.url }}{% endfor %}
+{% for lang in site.languages %}
+{% if lang != site.default_lang %}
+{% for page in site.pages %}
+{{site.url}}/{{lang}}{{ page.url }}{% endfor %}
+{% for post in site.posts %}
+{{site.url}}/{{lang}}{{ post.url }}{% endfor %}
+{% endif %}
+{% endfor %}
+
