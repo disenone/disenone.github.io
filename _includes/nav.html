@@ -1,5 +1,6 @@
 <!-- Navigation -->
-<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
     <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header page-scroll">
@@ -23,6 +24,27 @@
                     <a href="{{ page.url | prepend: site.baseurl }}">{{ page.title }}</a>
                 </li>
                 {% endif %}{% endfor %}
+
+
+                <ul class="floating-menu lang-switcher">
+                    {% for lang in site.languages %}
+                    {% assign lang_name = site.data[lang].i18n.lang_name %}
+                    {% if lang == site.active_lang %}
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    {% else %}
+                        <li class="lang-option-inactive masthead__menu-item">
+                            {% if lang == site.default_lang %}
+                                <a lang="{{ lang_name }}" href=" {{ page.url }}">
+                            {% else %}
+                                <a lang="{{ lang_name }}" href="/{{ lang }}{{ page.url }}">
+                            {% endif %}
+                    {% endif %}
+                        {{ lang_name }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
             </ul>
         </div>
         <!-- /.navbar-collapse -->

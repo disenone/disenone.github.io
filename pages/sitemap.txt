@@ -1,6 +1,6 @@
 ---
 # Remember to set url in your _config.yml file!
-title : Sitemap
+# title : Sitemap
 ---
 {% for page in site.pages %}
 {{site.url}}{{ page.url }}{% endfor %}
