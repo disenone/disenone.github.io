@@ -7,6 +7,7 @@ tags: [dev, game]
 description: |
     __builtin__ 跟 __builtins__ 有什么区别？__builtins__ 在 main 模块跟其他模块是不同的？为什么会设定成不同？__builtins__ 是在哪里定义的？本文我们来探讨一下关于 __builtins__ 的冷知识，并且还有一些引申的内容，不容错过。
 figures: []
+lang: zh
 ---
 {% include asset_path %}
 

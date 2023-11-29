@@ -26,7 +26,7 @@ description: "work smarter"
             <img src="{{figure}}" {% if post.nowidth %} {% else %} width="200" {% endif %} style="display: inline-block"/>  <!--</a>-->
         {% endfor %}
     </a>
-    <p class="post-meta">Posted by {% if post.author %}{{ post.author }}{% else %}{{ site.title }}{% endif %} on {{ post.date | date: "%B %-d, %Y" }}</p>
+    <p class="post-meta">Posted by {% if post.author %}{{ post.author }}{% else %}{{ site.data.i18n.title}}{% endif %} on {{ post.date | date: "%B %-d, %Y" }}</p>
 </div>
 
 <hr>

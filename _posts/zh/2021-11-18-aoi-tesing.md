@@ -7,6 +7,7 @@ tags: [dev, game]
 description: |
     本文讨论九宫格和十字链两种算法，并给出两种算法的实测性能分析，让你用起来心中有数，遇事不慌。
 figures: []
+lang: zh
 ---
 {% include asset_path %}
 

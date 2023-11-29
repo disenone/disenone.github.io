@@ -7,6 +7,7 @@ tags: [dev]
 description: |
     体积光散射是一个挺不错的视觉效果，你仿佛看到了光线在空中的传播，空中的微粒被光照亮，而部分光线又被遮挡住，视觉上会产生从光源辐射出的光线。
 figures: [assets/post_assets/2014-3-30-unity-light-scattering/effect.gif]
+lang: zh
 ---
 
 {% include asset_path %}

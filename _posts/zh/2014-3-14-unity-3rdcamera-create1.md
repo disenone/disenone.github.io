@@ -5,6 +5,7 @@ categories: unity
 catalog: true
 tags: [dev]
 description: "我想在Unity中创建一个第三人称相机，相机的行为参考《魔兽世界》的第三人称相机。这里来解决相机的刚体问题。"
+lang: zh
 ---
 
 

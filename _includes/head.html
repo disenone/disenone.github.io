@@ -1,4 +1,9 @@
 <head>
+    {% if site.active_lang == site.default_lang %}
+        {% assign site_url = site.url %}
+    {% else %}
+        {% assign site_url = site.url | append: '/'  %}
+    {% endif %}
 
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -6,9 +11,9 @@
     <meta name="description" content="{{ site.description }}">
     <base target="_blank" />
 
-    <title>{% if page.title %}{{ page.title }} - {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+    <title>{% if page.title %}{{ page.title }} - {{ site.data.i18n.title }}{% else %}{{ site.data.i18n.title }}{% endif %}</title>
 
-    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
+    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site_url }}">
 
     <!-- Icons -->
     <link rel="shortcut icon" href="/img/favicon.ico">

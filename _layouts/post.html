@@ -2,6 +2,12 @@
 layout: default
 ---
 
+{% if site.active_lang == site.default_lang %}
+    {% assign site_url = site.url %}
+{% else %}
+    {% assign site_url = site.url | append: '/'  %}
+{% endif %}
+
 <script type="text/javascript"
  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
 </script>
@@ -26,7 +32,7 @@ layout: default
                     {% if page.subtitle %}
                     <h2 class="subheading">{{ page.subtitle }}</h2>
                     {% endif %}
-                    <span class="meta">Posted by {% if page.author %}{{ page.author }}{% else %}{{ site.title }}{% endif %} on {{ page.date | date: "%B %-d, %Y" }}</span>
+                    <span class="meta">Posted by {% if page.author %}{{ page.author }}{% else %}{{ site.data.i18n.title }}{% endif %} on {{ page.date | date: "%B %-d, %Y" }}</span>
                 </div>
             </div>
         </div>
@@ -48,10 +54,7 @@ layout: default
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
 
                 <p class="copyright text-muted">
-                    除特别注明外，本站所有文章均为
-                    <a href="{{site.url}}" style = "color:#51aded;"> {{site.title}} </a>
-                    原创，转载请注明出处来自
-                    <a href ="{{page.url}}" style = "color:#51aded;"> {{page.title}} </a>。
+                    {{ site.data.i18n.copyright | replace_first: "%s", site_url | replace_first: "%s", site.data.i18n.title | replace_first: "%s", page_url | replace_first: "%s", page.title }}
                 </p>
 
                 <hr>
@@ -62,10 +65,7 @@ layout: default
 
                 
                 <p class="copyright text-muted">
-                    除特别注明外，本站所有文章均为
-                    <a href="{{site.url}}" style = "color:#51aded;"> {{site.title}} </a>
-                    原创，转载请注明出处来自
-                    <a href ="{{page.url}}" style = "color:#51aded;"> {{page.title}} </a>。
+                    {{ site.data.i18n.copyright | replace_first: "%s", site_url | replace_first: "%s", site.data.i18n.title | replace_first: "%s", page_url | replace_first: "%s", page.title }}
                 </p>
 
                 <ul class="pager">
