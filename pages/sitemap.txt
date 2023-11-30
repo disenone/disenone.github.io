@@ -1,6 +1,7 @@
 ---
 # Remember to set url in your _config.yml file!
 # title : Sitemap
+permalink: sitemap.txt
 ---
 {% for page in site.pages %}
 {{site.url}}{{ page.url }}{% endfor %}
@@ -14,4 +15,3 @@
 {{site.url}}/{{lang}}{{ post.url }}{% endfor %}
 {% endif %}
 {% endfor %}
-
