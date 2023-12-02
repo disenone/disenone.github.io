@@ -9,6 +9,7 @@ description: |
 figures: [assets/post_assets/2014-3-27-unity-depth-minimap/topview.png]
 lang: zh
 ---
+<meta property="og:title" content="Unity画深度图(Depth Map)和边缘检测(Edge Detection)" />
 
 {% include asset_path %}
 

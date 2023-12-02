@@ -9,6 +9,8 @@ description: |
 figures: []
 lang: zh
 ---
+<meta property="og:title" content="Python 杂谈 1 - 探究 __builtins__ - Disenone" />
+
 {% include asset_path %}
 
 ## 引子

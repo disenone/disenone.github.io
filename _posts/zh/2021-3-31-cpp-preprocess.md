@@ -9,6 +9,8 @@ description: |
 figures: []
 lang: zh
 ---
+<meta property="og:title" content="C/C++ 宏编程解析" />
+
 {% include asset_path %}
 
 本文的目的是要讲清楚 C/C++ 的宏编程的规则和实现方法，让你不再惧怕看到代码里面的宏。我会首先说说 C++ 标准 14 里面提到的关于宏展开的规则，然后通过修改 Clang 的源码来观察宏展开，最后基于这些知识来聊聊宏编程的实现。

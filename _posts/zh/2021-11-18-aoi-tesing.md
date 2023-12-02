@@ -9,6 +9,8 @@ description: |
 figures: []
 lang: zh
 ---
+<meta property="og:title" content="游戏 AOI 算法解析和性能实测" />
+
 {% include asset_path %}
 
 ### 引子

@@ -9,6 +9,7 @@ description: |
 figures: [assets/post_assets/2014-3-30-unity-light-scattering/effect.gif]
 lang: zh
 ---
+<meta property="og:title" content="Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)" />
 
 {% include asset_path %}
 

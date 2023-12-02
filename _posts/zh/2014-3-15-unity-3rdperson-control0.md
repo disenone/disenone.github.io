@@ -9,6 +9,7 @@ description: |
 figures: [assets/post_assets/2014-3-15-unity-3rdperson-control0/run_jump.gif]
 lang: zh
 ---
+<meta property="og:title" content="Unity人物控制" />
 
 人物的动作控制是游戏里面很重要的一部分，操作性强的游戏能够很好的吸引玩家。这里我就尝试做一个简单的人物操作控制，人物能够完成基本的移动，包括行走，跳跃。
 

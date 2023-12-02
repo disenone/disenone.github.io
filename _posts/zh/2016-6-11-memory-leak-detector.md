@@ -9,6 +9,8 @@ description: |
 figures: [assets/post_assets/2016-6-11-memory-leak-detector/depends.png]
 lang: zh
 ---
+<meta property="og:title" content="编写 Windows 下的 Memory Leak Detector" />
+
 {% include asset_path %}
 
 ![](https://img.shields.io/badge/windows-10-blue.svg){:style="display: inline-block"}
