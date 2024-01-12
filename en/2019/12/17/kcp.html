@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>KCP 源码剖析 - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/en//2019/12/17/kcp">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/en/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/en/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/en/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/en/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/en/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="简体中文" href="/en/2019/12/17/kcp">
+                            
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;">
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/en/Tags/#dev" title="dev">dev</a>
+                        
+                    </div>
+                    <h1>KCP 源码剖析</h1>
+                    
+                    <span class="meta">Posted by Disenone on December 17, 2019</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    Unless otherwise specified, all articles on this site are original works by <a href="https://disenone.github.io/en/" style="color:#51aded;"> Disenone </a>. Please indicate the source as <a href="" style="color:#51aded;"> KCP 源码剖析 </a> if you wish to reproduce them.
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="KCP 源码剖析">
+
+<p>阅读本文之前，如果没听说过 KCP ，或者一点都不了解 KCP，麻烦抽一点时间先看看 KCP 项目的说明文档：<a href="https://github.com/skywind3000/kcp">传送门</a>。本文的目的是深入 KCP 的实现细节去理解 KCP 。</p>
+
+<h2 id="什么是-kcp">什么是 KCP</h2>
+
+<p>KCP 是一个快速可靠协议，能够以比 TCP 更低的延迟来传送数据，数据重传更快，等待时间更短。</p>
+
+<blockquote>
+  <p>TCP是为流量设计的（每秒内可以传输多少KB的数据），讲究的是充分利用带宽。而 KCP是为流速设计的（单个数据包从一端发送到一端需要多少时间），以10%-20%带宽浪费的代价换取了比 TCP快30%-40%的传输速度。TCP信道是一条流速很慢，但每秒流量很大的大运河，而KCP是水流湍急的小激流</p>
+</blockquote>
+
+<p>以上是 KCP 文档上面写的，关键词是<strong>带宽</strong>和<strong>流速</strong>，KCP 会损耗带宽，带来的好处是更大更均衡的传输速率。更多的说明参考 KCP 自身的文档。</p>
+
+<h2 id="kcp-数据结构">KCP 数据结构</h2>
+
+<p>KCP 源码在 <code class="language-plaintext highlighter-rouge">ikcp.h</code> 和 <code class="language-plaintext highlighter-rouge">ikcp.c</code> 里面，<code class="language-plaintext highlighter-rouge">ikcp.h</code> 核心的是数据结构的声明，首先是 <code class="language-plaintext highlighter-rouge">SEGMENT</code> 数据包，是 KCP 协议处理数据的最小单位：</p>
+
+<details>
+<summary> SEGMENT 结构（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">//=====================================================================</span>
+<span class="c1">// SEGMENT 一个 SETMENT 就是一个数据包</span>
+<span class="c1">//=====================================================================</span>
+<span class="k">struct</span> <span class="nc">IKCPSEG</span>
+<span class="p">{</span>
+    <span class="c1">// 链表节点，发送和接受队列都是这里的链表的结构</span>
+    <span class="k">struct</span> <span class="nc">IQUEUEHEAD</span> <span class="n">node</span><span class="p">;</span>
+
+    <span class="c1">// 会话编号，同一个会话编号相同</span>
+    <span class="n">IUINT32</span> <span class="n">conv</span><span class="p">;</span>
+
+    <span class="c1">// 数据包类型，譬如 DATA 或者 ACK</span>
+    <span class="n">IUINT32</span> <span class="n">cmd</span><span class="p">;</span>
+
+    <span class="c1">// 由于 MTU 的限制，大数据包会拆分成多个小数据包，这个是小数据包的编号</span>
+    <span class="n">IUINT32</span> <span class="n">frg</span>
+
+    <span class="c1">// 每个数据包，都会附带上发送方的接受窗口大小</span>
+    <span class="n">IUINT32</span> <span class="n">wnd</span><span class="p">;</span>
+
+    <span class="c1">// 发送时间，如果是 ACK 包，会设置为源数据包的 ts</span>
+    <span class="n">IUINT32</span> <span class="n">ts</span><span class="p">;</span>
+
+    <span class="c1">// 唯一标识数据包的编号</span>
+    <span class="n">IUINT32</span> <span class="n">sn</span><span class="p">;</span>
+
+    <span class="c1">// 代表小于 una 的数据包都接收成功，跟 TCP 含义一致：oldest unacknowledged sequence number SND</span>
+    <span class="n">IUINT32</span> <span class="n">una</span><span class="p">;</span>
+
+    <span class="c1">// 数据长度</span>
+    <span class="n">IUINT32</span> <span class="n">len</span><span class="p">;</span>
+
+    <span class="c1">// 超时重传时间</span>
+    <span class="n">IUINT32</span> <span class="n">resendts</span><span class="p">;</span>
+
+    <span class="c1">// 下次超时等待时间</span>
+    <span class="n">IUINT32</span> <span class="n">rto</span><span class="p">;</span>
+
+    <span class="c1">// 快速重传，收到本数据包之后的数据包的数量，大于一定数量就触发快速重传</span>
+    <span class="n">IUINT32</span> <span class="n">fastack</span><span class="p">;</span>
+
+    <span class="c1">// 发送次数</span>
+    <span class="n">IUINT32</span> <span class="n">xmit</span><span class="p">;</span>
+
+    <span class="c1">// 数据</span>
+    <span class="kt">char</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="p">};</span></code></pre></figure>
+
+</details>
+
+<p>看完 <code class="language-plaintext highlighter-rouge">SEGMENT</code> 的注释，大致能看出 KCP 的核心也是一个 ARQ 协议，通过自动超时重传来保证数据的送达。接着再来看看 KCP 结构 <code class="language-plaintext highlighter-rouge">KCPCB</code> 的定义：</p>
+
+<details>
+<summary> KCP 结构（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">//---------------------------------------------------------------------</span>
+<span class="c1">// IKCPCB</span>
+<span class="c1">//---------------------------------------------------------------------</span>
+<span class="k">struct</span> <span class="nc">IKCPCB</span>
+<span class="p">{</span>
+    <span class="c1">// conv: 会话编号</span>
+    <span class="c1">// mtu, mss: 最大传输单元，最大报文段大小</span>
+    <span class="c1">// state: 会话状态，0 有效，-1 断开</span>
+    <span class="n">IUINT32</span> <span class="n">conv</span><span class="p">,</span> <span class="n">mtu</span><span class="p">,</span> <span class="n">mss</span><span class="p">,</span> <span class="n">state</span><span class="p">;</span>
+
+    <span class="c1">// snd_una: 等待 ACK 的包编号</span>
+    <span class="c1">// snd_nxt: 下一个等待发送的数据包编号</span>
+    <span class="c1">// rcv_nxt: 下一个等待接收的数据包编号</span>
+    <span class="n">IUINT32</span> <span class="n">snd_una</span><span class="p">,</span> <span class="n">snd_nxt</span><span class="p">,</span> <span class="n">rcv_nxt</span><span class="p">;</span>
+
+    <span class="c1">// ts_recent, ts_lastack: 未用到</span>
+    <span class="c1">// ssthresh: 拥塞控制慢启动阈值</span>
+    <span class="n">IUINT32</span> <span class="n">ts_recent</span><span class="p">,</span> <span class="n">ts_lastack</span><span class="p">,</span> <span class="n">ssthresh</span><span class="p">;</span>
+
+    <span class="c1">// rx_rto: rto (retransmission timeout)，超时重传时间</span>
+    <span class="c1">// rx_rttval, rx_srtt, rx_minrto: 计算 rto 的中间变量</span>
+    <span class="n">IINT32</span> <span class="n">rx_rttval</span><span class="p">,</span> <span class="n">rx_srtt</span><span class="p">,</span> <span class="n">rx_rto</span><span class="p">,</span> <span class="n">rx_minrto</span><span class="p">;</span>
+
+    <span class="c1">// snd_wnd, rcv_wnd: 最大发送和接收窗口大小</span>
+    <span class="c1">// rmt_wnd: remote wnd ，对端剩余接受窗口大小</span>
+    <span class="c1">// cwnd: 可发送窗口大小</span>
+    <span class="c1">// probe: 是否要发送控制报文的标志</span>
+    <span class="n">IUINT32</span> <span class="n">snd_wnd</span><span class="p">,</span> <span class="n">rcv_wnd</span><span class="p">,</span> <span class="n">rmt_wnd</span><span class="p">,</span> <span class="n">cwnd</span><span class="p">,</span> <span class="n">probe</span><span class="p">;</span>
+
+    <span class="c1">// current: 当前时间</span>
+    <span class="c1">// interval: 更新间隔</span>
+    <span class="c1">// ts_flush: 下次需要更新的时间</span>
+    <span class="c1">// xmit: 发送失败次数</span>
+    <span class="n">IUINT32</span> <span class="n">current</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">ts_flush</span><span class="p">,</span> <span class="n">xmit</span><span class="p">;</span>
+
+    <span class="c1">// 对应链表的长度</span>
+    <span class="n">IUINT32</span> <span class="n">nrcv_buf</span><span class="p">,</span> <span class="n">nsnd_buf</span><span class="p">;</span>
+    <span class="n">IUINT32</span> <span class="n">nrcv_que</span><span class="p">,</span> <span class="n">nsnd_que</span><span class="p">;</span>
+
+    <span class="c1">// nodelay: 控制超时重传的 rto 增长速度</span>
+    <span class="c1">// updated: 是否调用过 ikcp_update</span>
+    <span class="n">IUINT32</span> <span class="n">nodelay</span><span class="p">,</span> <span class="n">updated</span><span class="p">;</span>
+
+    <span class="c1">// ts_probe, probe_wait: 对端接收窗口长时间为 0 时主动定期发起询问</span>
+    <span class="n">IUINT32</span> <span class="n">ts_probe</span><span class="p">,</span> <span class="n">probe_wait</span><span class="p">;</span>
+
+    <span class="c1">// deal_link: 对端长时间无应答</span>
+    <span class="c1">// incr: 参与计算发送窗口大小</span>
+    <span class="n">IUINT32</span> <span class="n">dead_link</span><span class="p">,</span> <span class="n">incr</span><span class="p">;</span>
+
+    <span class="c1">// queue: 跟用户层接触的数据包</span>
+    <span class="c1">// buf: 协议缓存的数据包</span>
+    <span class="k">struct</span> <span class="nc">IQUEUEHEAD</span> <span class="n">snd_queue</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">IQUEUEHEAD</span> <span class="n">rcv_queue</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">IQUEUEHEAD</span> <span class="n">snd_buf</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">IQUEUEHEAD</span> <span class="n">rcv_buf</span><span class="p">;</span>
+
+    <span class="c1">// 需要发送 ack 的数据包信息</span>
+    <span class="n">IUINT32</span> <span class="o">*</span><span class="n">acklist</span><span class="p">;</span>
+
+    <span class="c1">// 需要 ack 的包数量</span>
+    <span class="n">IUINT32</span> <span class="n">ackcount</span><span class="p">;</span>
+
+    <span class="c1">// acklist 内存大小</span>
+    <span class="n">IUINT32</span> <span class="n">ackblock</span><span class="p">;</span>
+
+    <span class="c1">// 用户层传进来的数据</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">user</span><span class="p">;</span>
+
+    <span class="c1">// 存放一个 kcp 包的空间</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">;</span>
+
+    <span class="c1">// 触发快速重传的 fastack 次数</span>
+    <span class="kt">int</span> <span class="n">fastresend</span><span class="p">;</span>
+
+    <span class="c1">// 快速重传最大次数</span>
+    <span class="kt">int</span> <span class="n">fastlimit</span><span class="p">;</span>
+
+    <span class="c1">// nocwnd: 不考虑慢启动的发送窗口大小</span>
+    <span class="c1">// stream: 流模式</span>
+    <span class="kt">int</span> <span class="n">nocwnd</span><span class="p">,</span> <span class="n">stream</span><span class="p">;</span>
+
+    <span class="c1">// debug log</span>
+    <span class="kt">int</span> <span class="n">logmask</span><span class="p">;</span>
+
+    <span class="c1">// 发送数据接口</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">output</span><span class="p">)(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">IKCPCB</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">user</span><span class="p">);</span>
+
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">writelog</span><span class="p">)(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">log</span><span class="p">,</span> <span class="k">struct</span> <span class="nc">IKCPCB</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">user</span><span class="p">);</span>
+<span class="p">};</span></code></pre></figure>
+
+</details>
+
+<p>逐一把 KCP 结构里面的字段注释上，可以初步感觉到，整套 KCP 的协议不太复杂，细细去分析代码，你我都能读懂并理解 KCP 协议 <img class="emoji" title=":smile:" alt=":smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" height="20" width="20"></p>
+
+<h2 id="kcp-的-arq-实现">KCP 的 ARQ 实现</h2>
+
+<p>KCP 本质上是一个 ARQ (Auto Repeat-reQuest，自动重传) 协议，最基本的是要保证可靠的传输。那么我们可以先来关注 KCP 的基本 ARQ 部分，KCP 是怎么实现可靠传输的。</p>
+
+<p>ARQ 顾名思义，当我们认为对端接收数据包失败时，自动重新发送对应的数据包，它是通过确认接收和超时重传两个机制，来实现可靠传输。具体的代码实现上， KCP 给每个数据包（就是上一节提到的 <code class="language-plaintext highlighter-rouge">SEGMENT</code> ） 分配唯一的 <code class="language-plaintext highlighter-rouge">sn</code> 标识符，一旦对端接收到数据包，会回复一个 ACK 包（同样是 <code class="language-plaintext highlighter-rouge">SEGMENT</code>），ACK 包的 <code class="language-plaintext highlighter-rouge">sn</code> 跟接收到的数据包 <code class="language-plaintext highlighter-rouge">sn</code> 相同，通知接收到此数据包已经接收成功。<code class="language-plaintext highlighter-rouge">SEGMENT</code> 上还有一个 <code class="language-plaintext highlighter-rouge">una</code> 字段，表示下一个期待接收的数据包的编号，换句话说，即是所有在该编号之前的数据包都已经接收完，相当于一个全量的 ACK 包，发送端可以更快的更新发送缓冲和发送窗口。</p>
+
+<p>我们可以通过跟踪 KCP 包的发送和接受代码，来理解最基本的 ARQ 实现：</p>
+
+<h3 id="发送">发送</h3>
+
+<p>发送的过程是 <code class="language-plaintext highlighter-rouge">ikcp_send</code> -&gt; <code class="language-plaintext highlighter-rouge">ikcp_update</code> -&gt; <code class="language-plaintext highlighter-rouge">ikcp_output</code>，上层调用 <code class="language-plaintext highlighter-rouge">ikcp_send</code> 把数据传给 KCP，KCP 在 <code class="language-plaintext highlighter-rouge">ikcp_update</code> 中处理数据的发送。</p>
+
+<details>
+<summary> ikcp_send（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">//---------------------------------------------------------------------</span>
+<span class="c1">// 发送数据接口，用户调用 ikcp_send 来让 kcp 发送数据</span>
+<span class="c1">// user/upper level send, returns below zero for error</span>
+<span class="c1">//---------------------------------------------------------------------</span>
+<span class="kt">int</span> <span class="nf">ikcp_send</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">seg</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="c1">// mss 不能小于1</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+    <span class="c1">// append to previous segment in streaming mode (if possible)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">stream</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 处理流模式</span>
+        <span class="c1">// ......</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 计算分包，如果数据长度 len 大于 mss，需要分成多个包发送，对端接受到之后再拼起来</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span><span class="p">)</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">else</span> <span class="n">count</span> <span class="o">=</span> <span class="p">(</span><span class="n">len</span> <span class="o">+</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">count</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">IKCP_WND_RCV</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="c1">// 分包</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">count</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 计算包的数据长度，并分配对应的 seg 结构</span>
+        <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="n">len</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span> <span class="o">?</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span> <span class="o">:</span> <span class="n">len</span><span class="p">;</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">ikcp_segment_new</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+        <span class="n">assert</span><span class="p">(</span><span class="n">seg</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">seg</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 设置 seg 的 数据信息，frg 表示分包编号</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">buffer</span> <span class="o">&amp;&amp;</span> <span class="n">len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">memcpy</span><span class="p">(</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">seg</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">size</span><span class="p">;</span>
+        <span class="n">seg</span><span class="o">-&gt;</span><span class="n">frg</span> <span class="o">=</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">stream</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">?</span> <span class="p">(</span><span class="n">count</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span>
+
+        <span class="c1">// 加到 snd_queue 的末尾，nsnd_qua 加一</span>
+        <span class="n">iqueue_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">);</span>
+        <span class="n">iqueue_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_queue</span><span class="p">);</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nsnd_que</span><span class="o">++</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">buffer</span> <span class="o">+=</span> <span class="n">size</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">len</span> <span class="o">-=</span> <span class="n">size</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p><code class="language-plaintext highlighter-rouge">ikcp_send</code> 是由 KCP 的上层来调用的发送数据接口，所有让 KCP 发送的数据，都应该通过这个接口。 <code class="language-plaintext highlighter-rouge">ikcp_send</code> 做的事情很简单，主要就是把数据，根据 <code class="language-plaintext highlighter-rouge">kcp-&gt;mss</code> （一个包最大数据长度）来分成多个包，并设置分包编号，最后放到发送链表 <code class="language-plaintext highlighter-rouge">snd_queue</code> 的末尾。流模式就是把多次调用 <code class="language-plaintext highlighter-rouge">ikcp_send</code> 的数据都看成一个流，会先自动填充未满的 <code class="language-plaintext highlighter-rouge">SEGMENT</code> 再分配新的，详细实现本文不讨论，感兴趣的，相信看完本文，再对应看看代码就能理解。</p>
+
+<p><code class="language-plaintext highlighter-rouge">ikcp_send</code> 调用完成之后，数据放在的 KCP 的 <code class="language-plaintext highlighter-rouge">snd_queue</code> 中，那么后面 KCP 需要找个时机，把待发送的数据发送出去，这块代码都放在 <code class="language-plaintext highlighter-rouge">ikcp_update</code> 和 <code class="language-plaintext highlighter-rouge">ikcp_flush</code> 里面：</p>
+
+<details>
+<summary> ikcp_update（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">//---------------------------------------------------------------------</span>
+<span class="c1">// ikcp_update 是给上层定期调用的接口，用来更新 kcp 的状态，发送数据</span>
+<span class="c1">// update state (call it repeatedly, every 10ms-100ms), or you can ask </span>
+<span class="c1">// ikcp_check when to call it again (without ikcp_input/_send calling).</span>
+<span class="c1">// 'current' - current timestamp in millisec. </span>
+<span class="c1">//---------------------------------------------------------------------</span>
+<span class="kt">void</span> <span class="nf">ikcp_update</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="n">IUINT32</span> <span class="n">current</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">IINT32</span> <span class="n">slap</span><span class="p">;</span>
+
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span> <span class="o">=</span> <span class="n">current</span><span class="p">;</span>
+
+    <span class="c1">// ikcp_flush 会检查这个，上层必须调用过 ikcp_update 才能调用 ikcp_flush，建议只使用 ikcp_update</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">updated</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">updated</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ts_flush</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">slap</span> <span class="o">=</span> <span class="n">_itimediff</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ts_flush</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">slap</span> <span class="o">&gt;=</span> <span class="mi">10000</span> <span class="o">||</span> <span class="n">slap</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">10000</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ts_flush</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span><span class="p">;</span>
+        <span class="n">slap</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">slap</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 下次 flush 的时间</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ts_flush</span> <span class="o">+=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">interval</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ts_flush</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ts_flush</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span> <span class="o">+</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">interval</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">ikcp_flush</span><span class="p">(</span><span class="n">kcp</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p><code class="language-plaintext highlighter-rouge">ikcp_update</code> 做的事情很简单，判断一下 <code class="language-plaintext highlighter-rouge">ts_flush</code> 的时间，符合条件则调用 <code class="language-plaintext highlighter-rouge">ikcp_flush</code>，主要的处理逻辑都在 <code class="language-plaintext highlighter-rouge">ikcp_flush</code> 里面了，因为 <code class="language-plaintext highlighter-rouge">ikcp_flush</code> 内容复杂一点，我们目前只关注跟 ARQ 发送相关的部分：</p>
+
+<details>
+<summary> 发送数据（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">//---------------------------------------------------------------------</span>
+<span class="c1">// ikcp_flush</span>
+<span class="c1">//---------------------------------------------------------------------</span>
+<span class="kt">void</span> <span class="nf">ikcp_flush</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">IUINT32</span> <span class="n">current</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span><span class="p">;</span>
+
+    <span class="c1">// buffer 是要传给 ikcp_output 的数据，初始化为 3 倍数据包大小</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">buffer</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">count</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">i</span><span class="p">;</span>
+    <span class="n">IUINT32</span> <span class="n">resent</span><span class="p">,</span> <span class="n">cwnd</span><span class="p">;</span>
+    <span class="n">IUINT32</span> <span class="n">rtomin</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">IQUEUEHEAD</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">change</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">lost</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">IKCPSEG</span> <span class="n">seg</span><span class="p">;</span>
+
+    <span class="c1">// 'ikcp_update' haven't been called.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">updated</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+
+    <span class="n">seg</span><span class="p">.</span><span class="n">conv</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">conv</span><span class="p">;</span>
+    <span class="n">seg</span><span class="p">.</span><span class="n">cmd</span> <span class="o">=</span> <span class="n">IKCP_CMD_ACK</span><span class="p">;</span>
+    <span class="n">seg</span><span class="p">.</span><span class="n">frg</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// seg.wnd 是表示当前可接收窗口大小</span>
+    <span class="n">seg</span><span class="p">.</span><span class="n">wnd</span> <span class="o">=</span> <span class="n">ikcp_wnd_unused</span><span class="p">(</span><span class="n">kcp</span><span class="p">);</span>
+    <span class="n">seg</span><span class="p">.</span><span class="n">una</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span><span class="p">;</span>
+    <span class="n">seg</span><span class="p">.</span><span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">seg</span><span class="p">.</span><span class="n">sn</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">seg</span><span class="p">.</span><span class="n">ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// 发送 ack</span>
+    <span class="c1">// 计算 发送窗口</span>
+    <span class="c1">//...</span>
+
+    <span class="c1">// 把数据包从 snd_queue 移动到 snd_buf</span>
+    <span class="c1">// 移动是需要满足 发送窗口 大小，发送窗口满了，就停止移动</span>
+    <span class="c1">// 放在 snd_buf 的里面的数据，就是可以直接调用 ikcp_output 给对端发送的数据</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_nxt</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_una</span> <span class="o">+</span> <span class="n">cwnd</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">newseg</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">iqueue_is_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_queue</span><span class="p">))</span> <span class="k">break</span><span class="p">;</span>
+
+        <span class="n">newseg</span> <span class="o">=</span> <span class="n">iqueue_entry</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_queue</span><span class="p">.</span><span class="n">next</span><span class="p">,</span> <span class="n">IKCPSEG</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+
+        <span class="n">iqueue_del</span><span class="p">(</span><span class="o">&amp;</span><span class="n">newseg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">);</span>
+        <span class="n">iqueue_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">newseg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_buf</span><span class="p">);</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nsnd_que</span><span class="o">--</span><span class="p">;</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nsnd_buf</span><span class="o">++</span><span class="p">;</span>
+
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">conv</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">conv</span><span class="p">;</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">cmd</span> <span class="o">=</span> <span class="n">IKCP_CMD_PUSH</span><span class="p">;</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">wnd</span> <span class="o">=</span> <span class="n">seg</span><span class="p">.</span><span class="n">wnd</span><span class="p">;</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">ts</span> <span class="o">=</span> <span class="n">current</span><span class="p">;</span>
+
+        <span class="c1">// seg 唯一序号，其实就是一个递增的 kcp-&gt;snd_nxt</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">sn</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_nxt</span><span class="o">++</span><span class="p">;</span>
+
+        <span class="c1">// una 在这里设置，通知对端下一个等待接收的包序号</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">una</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span><span class="p">;</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">resendts</span> <span class="o">=</span> <span class="n">current</span><span class="p">;</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">rto</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rx_rto</span><span class="p">;</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">fastack</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">xmit</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 计算快速重传标志，超时等待时间</span>
+    <span class="c1">// ...</span>
+
+    <span class="c1">// 发送 snd_buf</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_buf</span><span class="p">.</span><span class="n">next</span><span class="p">;</span> <span class="n">p</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_buf</span><span class="p">;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">segment</span> <span class="o">=</span> <span class="n">iqueue_entry</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">IKCPSEG</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+        <span class="kt">int</span> <span class="n">needsend</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 首次发送</span>
+            <span class="c1">// set-&gt;xmit 表示发送次数</span>
+            <span class="c1">// resendts 超时重传的等待时间</span>
+            <span class="n">needsend</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span><span class="o">++</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">rto</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rx_rto</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">resendts</span> <span class="o">=</span> <span class="n">current</span> <span class="o">+</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">rto</span> <span class="o">+</span> <span class="n">rtomin</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">resendts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 超时重传</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">fastack</span> <span class="o">&gt;=</span> <span class="n">resent</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 快速重传</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">needsend</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">need</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">ts</span> <span class="o">=</span> <span class="n">current</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">wnd</span> <span class="o">=</span> <span class="n">seg</span><span class="p">.</span><span class="n">wnd</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">una</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span><span class="p">;</span>
+
+            <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">ptr</span> <span class="o">-</span> <span class="n">buffer</span><span class="p">);</span>
+            <span class="n">need</span> <span class="o">=</span> <span class="n">IKCP_OVERHEAD</span> <span class="o">+</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">;</span>
+
+            <span class="c1">// 每当 buffer 中的数据超过 mtu ，那就先发出去，尽量避免底层再分包</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">+</span> <span class="n">need</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mtu</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">ikcp_output</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+                <span class="n">ptr</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 把 seg 控制数据复制到 buffer 上，kcp 自己来处理大小端问题</span>
+            <span class="n">ptr</span> <span class="o">=</span> <span class="n">ikcp_encode_seg</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="n">segment</span><span class="p">);</span>
+
+            <span class="c1">// 再复制数据</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">memcpy</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">);</span>
+                <span class="n">ptr</span> <span class="o">+=</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">;</span>
+            <span class="p">}</span>
+
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span> <span class="o">&gt;=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">dead_link</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">=</span> <span class="p">(</span><span class="n">IUINT32</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// flash remain segments</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">ptr</span> <span class="o">-</span> <span class="n">buffer</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ikcp_output</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 计算 ssthresh，更新慢启动窗口</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p>我们目前只关注 <code class="language-plaintext highlighter-rouge">ikcp_flush</code> 里面有关发送数据的逻辑：</p>
+
+<ul>
+  <li>
+    <p>首先 KCP 会根据对端的接收窗口大小，把 <code class="language-plaintext highlighter-rouge">snd_queue</code> 上的数据移动到 <code class="language-plaintext highlighter-rouge">snd_buf</code> 上面，计算移动数量的公式是 <code class="language-plaintext highlighter-rouge">num = snd_nxt - (snd_una + cwnd)</code>，也就是：已发送成功的最大包序号 <code class="language-plaintext highlighter-rouge">snd_una</code> 加上 滑动窗口大小 <code class="language-plaintext highlighter-rouge">cwnd</code> 大于 下个待发送的包序号<code class="language-plaintext highlighter-rouge">snd_nxt</code>，则可以继续再发送新的数据包。移动 <code class="language-plaintext highlighter-rouge">SEG</code> 的同时，设置控制字段。</p>
+  </li>
+  <li>
+    <p>遍历 <code class="language-plaintext highlighter-rouge">snd_buf</code>，如果需要发送数据包，则把数据复制到 <code class="language-plaintext highlighter-rouge">buffer</code> 上，复制的同时用 <code class="language-plaintext highlighter-rouge">ikcp_encode_seg</code> 处理控制字段数据的大小端问题。</p>
+  </li>
+  <li>
+    <p>最后调用 <code class="language-plaintext highlighter-rouge">ikcp_output</code> 把 <code class="language-plaintext highlighter-rouge">buffer</code> 上的数据发送出去</p>
+  </li>
+</ul>
+
+<p>至此， KCP 完成数据的发送。</p>
+
+<h3 id="接收">接收</h3>
+
+<p>接收的过程是跟发送相反的：<code class="language-plaintext highlighter-rouge">ikcp_input</code> -&gt; <code class="language-plaintext highlighter-rouge">ikcp_update</code> -&gt; <code class="language-plaintext highlighter-rouge">ikcp_recv</code>，用户接收到网络上的数据之后，需要调用 <code class="language-plaintext highlighter-rouge">ikcp_input</code> 传给 KCP 解析，调用 <code class="language-plaintext highlighter-rouge">ikcp_update</code> 的时候会给发送端回复 ACK 包，上层通过调用 <code class="language-plaintext highlighter-rouge">ikcp_recv</code> 来接收 KCP 解析之后的数据。</p>
+
+<details>
+<summary> 接收数据（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">//---------------------------------------------------------------------</span>
+<span class="c1">// input data</span>
+<span class="c1">//---------------------------------------------------------------------</span>
+<span class="kt">int</span> <span class="nf">ikcp_input</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">long</span> <span class="n">size</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">IUINT32</span> <span class="n">prev_una</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_una</span><span class="p">;</span>
+    <span class="n">IUINT32</span> <span class="n">maxack</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">latest_ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// 合法性检查</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">size</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">IKCP_OVERHEAD</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+    <span class="c1">// data 可能是多个 KCP 包，循环处理</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">IUINT32</span> <span class="n">ts</span><span class="p">,</span> <span class="n">sn</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">una</span><span class="p">,</span> <span class="n">conv</span><span class="p">;</span>
+        <span class="n">IUINT16</span> <span class="n">wnd</span><span class="p">;</span>
+        <span class="n">IUINT8</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">frg</span><span class="p">;</span>
+        <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">seg</span><span class="p">;</span>
+
+        <span class="c1">// 不够一个 KCP 包，退出</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">IKCP_OVERHEAD</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+
+        <span class="c1">// 先把控制字段解析出来</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode32u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">conv</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">conv</span> <span class="o">!=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">conv</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode8u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cmd</span><span class="p">);</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode8u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">frg</span><span class="p">);</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode16u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">wnd</span><span class="p">);</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode32u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ts</span><span class="p">);</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode32u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sn</span><span class="p">);</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode32u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">una</span><span class="p">);</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode32u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
+
+        <span class="n">size</span> <span class="o">-=</span> <span class="n">IKCP_OVERHEAD</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="kt">long</span><span class="p">)</span><span class="n">size</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">long</span><span class="p">)</span><span class="n">len</span> <span class="o">||</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">len</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+
+        <span class="c1">// 数据包类型检查</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cmd</span> <span class="o">!=</span> <span class="n">IKCP_CMD_PUSH</span> <span class="o">&amp;&amp;</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="n">IKCP_CMD_ACK</span> <span class="o">&amp;&amp;</span>
+            <span class="n">cmd</span> <span class="o">!=</span> <span class="n">IKCP_CMD_WASK</span> <span class="o">&amp;&amp;</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="n">IKCP_CMD_WINS</span><span class="p">)</span> 
+            <span class="k">return</span> <span class="o">-</span><span class="mi">3</span><span class="p">;</span>
+
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rmt_wnd</span> <span class="o">=</span> <span class="n">wnd</span><span class="p">;</span>
+
+        <span class="c1">// 这里的 una 是发送方的 kcp-&gt;rcv_nxt，根据这个数据，可以去掉已确认接收的数据包</span>
+        <span class="n">ikcp_parse_una</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">una</span><span class="p">);</span>
+        <span class="c1">// 去掉已确认接收的包后，更新 snd_una 下一个要发送的序号</span>
+        <span class="n">ikcp_shrink_buf</span><span class="p">(</span><span class="n">kcp</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="n">IKCP_CMD_ACK</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// ack 包</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="n">IKCP_CMD_PUSH</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 数据包</span>
+            <span class="c1">// 如果接收到的数据包序号 sn，在接收窗口内，则正常处理，否则直接丢弃，等重传</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span> <span class="o">+</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_wnd</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+
+                <span class="c1">// 接收到的每个数据包，都要回一个 ack 包，记录下来</span>
+                <span class="n">ikcp_ack_push</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">sn</span><span class="p">,</span> <span class="n">ts</span><span class="p">);</span>
+
+                <span class="c1">// 接收的数据调用 ikcp_parse_data 处理</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">seg</span> <span class="o">=</span> <span class="n">ikcp_segment_new</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+                    <span class="n">seg</span><span class="o">-&gt;</span><span class="n">conv</span> <span class="o">=</span> <span class="n">conv</span><span class="p">;</span>
+                    <span class="n">seg</span><span class="o">-&gt;</span><span class="n">cmd</span> <span class="o">=</span> <span class="n">cmd</span><span class="p">;</span>
+                    <span class="n">seg</span><span class="o">-&gt;</span><span class="n">frg</span> <span class="o">=</span> <span class="n">frg</span><span class="p">;</span>
+                    <span class="n">seg</span><span class="o">-&gt;</span><span class="n">wnd</span> <span class="o">=</span> <span class="n">wnd</span><span class="p">;</span>
+                    <span class="n">seg</span><span class="o">-&gt;</span><span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">;</span>
+                    <span class="n">seg</span><span class="o">-&gt;</span><span class="n">sn</span> <span class="o">=</span> <span class="n">sn</span><span class="p">;</span>
+                    <span class="n">seg</span><span class="o">-&gt;</span><span class="n">una</span> <span class="o">=</span> <span class="n">una</span><span class="p">;</span>
+                    <span class="n">seg</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">len</span><span class="p">;</span>
+
+                    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">memcpy</span><span class="p">(</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="n">ikcp_parse_data</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">seg</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="n">IKCP_CMD_WASK</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 查询窗口包</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="n">IKCP_CMD_WINS</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 查询窗口的回复包</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">3</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">data</span> <span class="o">+=</span> <span class="n">len</span><span class="p">;</span>
+        <span class="n">size</span> <span class="o">-=</span> <span class="n">len</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 处理快速重传逻辑</span>
+    <span class="c1">// ...</span>
+
+    <span class="c1">// 更新发送窗口</span>
+    <span class="c1">// ...</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p><code class="language-plaintext highlighter-rouge">ikcp_input</code> 循环处理每一个 <code class="language-plaintext highlighter-rouge">SEG</code> 包，先检查数据包的合法性和类型，因为每个数据包都会带上 <code class="language-plaintext highlighter-rouge">una</code>，存放的是发送端等待接收的包序号，需要小于 <code class="language-plaintext highlighter-rouge">una</code> 的包对端都已经接受成功，所以可以把 <code class="language-plaintext highlighter-rouge">snd_buff</code> 中需要小于 <code class="language-plaintext highlighter-rouge">una</code> 的都删掉，并更新 <code class="language-plaintext highlighter-rouge">snd_nxt</code>，这一部分由 <code class="language-plaintext highlighter-rouge">ikcp_parse_una</code> 和 <code class="language-plaintext highlighter-rouge">ikcp_shrink_buf</code> 来处理。接收到的每个数据包，都需要回复 ACK 包，由 <code class="language-plaintext highlighter-rouge">ikcp_ack_push</code> 记录下来，最后调用 <code class="language-plaintext highlighter-rouge">ikcp_parse_data</code> 处理数据。</p>
+
+<details>
+<summary> 解析数据（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> <span class="nf">ikcp_parse_data</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">newseg</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">IQUEUEHEAD</span> <span class="o">*</span><span class="n">p</span><span class="p">,</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
+    <span class="n">IUINT32</span> <span class="n">sn</span> <span class="o">=</span> <span class="n">newseg</span><span class="o">-&gt;</span><span class="n">sn</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">repeat</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// 序号检查</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span> <span class="o">+</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_wnd</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">||</span>
+        <span class="n">_itimediff</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ikcp_segment_delete</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">newseg</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 找出 newseg 应该放置的位置，因为接收到的 seg 可能是乱序的</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_buf</span><span class="p">.</span><span class="n">prev</span><span class="p">;</span> <span class="n">p</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_buf</span><span class="p">;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">prev</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">seg</span> <span class="o">=</span> <span class="n">iqueue_entry</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">IKCPSEG</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">sn</span> <span class="o">==</span> <span class="n">sn</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 重复收到</span>
+            <span class="n">repeat</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> <span class="n">seg</span><span class="o">-&gt;</span><span class="n">sn</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 把 newseg 放到 rcv_buf 正确的位置上</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">repeat</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">iqueue_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">newseg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">);</span>
+        <span class="n">iqueue_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">newseg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_buf</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span>    <span class="k">else</span> <span class="p">{</span>
+        <span class="n">ikcp_segment_delete</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">newseg</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 把数据从 rcv_buf 移动到 rcv_queue</span>
+    <span class="k">while</span> <span class="p">(</span><span class="o">!</span> <span class="n">iqueue_is_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_buf</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">seg</span> <span class="o">=</span> <span class="n">iqueue_entry</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_buf</span><span class="p">.</span><span class="n">next</span><span class="p">,</span> <span class="n">IKCPSEG</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+        <span class="c1">// 如果 seg 序号是等待接收的序号，移动到 rcv_queue</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">sn</span> <span class="o">==</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span> <span class="o">&amp;&amp;</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_que</span> <span class="o">&lt;</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_wnd</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">iqueue_del</span><span class="p">(</span><span class="o">&amp;</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">);</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_buf</span><span class="o">--</span><span class="p">;</span>
+            <span class="n">iqueue_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_queue</span><span class="p">);</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_que</span><span class="o">++</span><span class="p">;</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span><span class="o">++</span><span class="p">;</span>
+        <span class="p">}</span>    <span class="k">else</span> <span class="p">{</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p><code class="language-plaintext highlighter-rouge">ikcp_parse_data</code> 主要的工作就是把 <code class="language-plaintext highlighter-rouge">newseg</code> 放置到 <code class="language-plaintext highlighter-rouge">kcp-&gt;rcv_buf</code> 合适的位置上，并把数据从 <code class="language-plaintext highlighter-rouge">rcv_buf</code> 移动到 <code class="language-plaintext highlighter-rouge">rcv_queue</code>。<code class="language-plaintext highlighter-rouge">rcv_buf</code> 合适的位置的意思是，<code class="language-plaintext highlighter-rouge">rcv_buf</code> 是按照 <code class="language-plaintext highlighter-rouge">sn</code> 的递增顺序排列的，<code class="language-plaintext highlighter-rouge">newseg</code> 需要根据自己的 <code class="language-plaintext highlighter-rouge">sn</code> 大小查找合适的位置。<code class="language-plaintext highlighter-rouge">rcv_buf</code> 上的数据要移动到 <code class="language-plaintext highlighter-rouge">rcv_queue</code>，条件是 <code class="language-plaintext highlighter-rouge">rcv_buf</code> 上的数据包序号，等于 KCP 在等待接收的包序号 <code class="language-plaintext highlighter-rouge">kcp-&gt;rcv_nxt</code> ，移动一个数据包之后，需要更新 <code class="language-plaintext highlighter-rouge">kcp-&gt;rvc_nxt</code>，再处理下一个数据包。</p>
+
+<p><code class="language-plaintext highlighter-rouge">ikcp_input</code> 之后，上层调用 <code class="language-plaintext highlighter-rouge">ikcp_update</code> 时候会发送 ACK 包，调用 <code class="language-plaintext highlighter-rouge">ikcp_recv</code> 会给上层返回有效数据。<code class="language-plaintext highlighter-rouge">ikcp_update</code> 和 <code class="language-plaintext highlighter-rouge">ikcp_recv</code> 互相独立，没有调用顺序要求，视上层的调用时机而定。我们先来看 <code class="language-plaintext highlighter-rouge">ikcp_update</code> 里面有关 ACK 发送的部分：</p>
+
+<details>
+<summary> 回复 ACK（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">// 前面说过，ikcp_update 最终是调用 ikcp_flush</span>
+<span class="kt">void</span> <span class="nf">ikcp_flush</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="n">IUINT32</span> <span class="n">current</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+
+    <span class="c1">// 回复 ACK 包</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ackcount</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">count</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">ptr</span> <span class="o">-</span> <span class="n">buffer</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">size</span> <span class="o">+</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">IKCP_OVERHEAD</span> <span class="o">&gt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mtu</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">ikcp_output</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">size</span><span class="p">);</span>
+            <span class="n">ptr</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">ikcp_ack_get</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">seg</span><span class="p">.</span><span class="n">sn</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">seg</span><span class="p">.</span><span class="n">ts</span><span class="p">);</span>
+        <span class="n">ptr</span> <span class="o">=</span> <span class="n">ikcp_encode_seg</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">seg</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ackcount</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// ...</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p>ACK 包的之前已经由 <code class="language-plaintext highlighter-rouge">ikcp_ack_push</code> 保存起来了，所以这里只需要 <code class="language-plaintext highlighter-rouge">ikcp_ack_get</code> 获取每个 ACK 包的信息，发送给对方。上层可以使用 <code class="language-plaintext highlighter-rouge">ikcp_recv</code> 从 KCP 获取数据：</p>
+
+<details>
+<summary> ikcp_recv（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">//---------------------------------------------------------------------</span>
+<span class="c1">// user/upper level recv: returns size, returns below zero for EAGAIN</span>
+<span class="c1">//---------------------------------------------------------------------</span>
+<span class="kt">int</span> <span class="nf">ikcp_recv</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">IQUEUEHEAD</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">ispeek</span> <span class="o">=</span> <span class="p">(</span><span class="n">len</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">peeksize</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">recover</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">seg</span><span class="p">;</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">kcp</span><span class="p">);</span>
+
+    <span class="c1">// 一些有效性检查</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">iqueue_is_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_queue</span><span class="p">))</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="n">len</span> <span class="o">=</span> <span class="o">-</span><span class="n">len</span><span class="p">;</span>
+
+    <span class="c1">// 计算能返回的数据长度</span>
+    <span class="n">peeksize</span> <span class="o">=</span> <span class="n">ikcp_peeksize</span><span class="p">(</span><span class="n">kcp</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">peeksize</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">peeksize</span> <span class="o">&gt;</span> <span class="n">len</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">3</span><span class="p">;</span>
+
+    <span class="c1">// 判断下接收窗口</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_que</span> <span class="o">&gt;=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_wnd</span><span class="p">)</span>
+        <span class="n">recover</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="c1">// 遍历 rcv_queue，把数据复制到 buffer 上</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_queue</span><span class="p">.</span><span class="n">next</span><span class="p">;</span> <span class="n">p</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_queue</span><span class="p">;</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">fragment</span><span class="p">;</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">iqueue_entry</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">IKCPSEG</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">buffer</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">memcpy</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">seg</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">seg</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">);</span>
+            <span class="n">buffer</span> <span class="o">+=</span> <span class="n">seg</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">len</span> <span class="o">+=</span> <span class="n">seg</span><span class="o">-&gt;</span><span class="n">len</span><span class="p">;</span>
+
+        <span class="c1">// 判断分包</span>
+        <span class="n">fragment</span> <span class="o">=</span> <span class="n">seg</span><span class="o">-&gt;</span><span class="n">frg</span><span class="p">;</span>
+
+        <span class="c1">// 移除数据包</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">ispeek</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">iqueue_del</span><span class="p">(</span><span class="o">&amp;</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">);</span>
+            <span class="n">ikcp_segment_delete</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">seg</span><span class="p">);</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_que</span><span class="o">--</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 所有分包都复制完，退出循环</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fragment</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">assert</span><span class="p">(</span><span class="n">len</span> <span class="o">==</span> <span class="n">peeksize</span><span class="p">);</span>
+
+    <span class="c1">// rcv_queue 又空了一些，尝试继续从 rcv_buf 移动到 rcv_queue</span>
+    <span class="k">while</span> <span class="p">(</span><span class="o">!</span> <span class="n">iqueue_is_empty</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_buf</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">iqueue_entry</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_buf</span><span class="p">.</span><span class="n">next</span><span class="p">,</span> <span class="n">IKCPSEG</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">sn</span> <span class="o">==</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span> <span class="o">&amp;&amp;</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_que</span> <span class="o">&lt;</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_wnd</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">iqueue_del</span><span class="p">(</span><span class="o">&amp;</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">);</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_buf</span><span class="o">--</span><span class="p">;</span>
+            <span class="n">iqueue_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">seg</span><span class="o">-&gt;</span><span class="n">node</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_queue</span><span class="p">);</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nrcv_que</span><span class="o">++</span><span class="p">;</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_nxt</span><span class="o">++</span><span class="p">;</span>
+        <span class="p">}</span>    <span class="k">else</span> <span class="p">{</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">len</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p><code class="language-plaintext highlighter-rouge">ikcp_recv</code> 一次调用只会返回一个完整的数据包，上层可以循环调用直到没有数据返回为止，函数的逻辑比较简单，就是从 <code class="language-plaintext highlighter-rouge">rcv_queue</code> 中复制数据到上层传进来的 <code class="language-plaintext highlighter-rouge">buffer</code> 里面，至此接收方对于接收到的数据包已经处理完毕。</p>
+
+<p>接收方处理数据包的时候，给发送方发送了 ACK 包，我们再来看看发送方接受 ACK 包的处理：</p>
+
+<details>
+<summary> 处理 ACK 包（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">int</span> <span class="nf">ikcp_input</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">long</span> <span class="n">size</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="n">IUINT32</span> <span class="n">maxack</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">latest_ts</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="c1">// ...</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// ...</span>
+        <span class="c1">// ts 是对端的 kcp-&gt; current</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode32u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ts</span><span class="p">);</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode32u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sn</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">cmd</span> <span class="o">==</span> <span class="n">IKCP_CMD_ACK</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 更新 rot</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span><span class="p">,</span> <span class="n">ts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">ikcp_update_ack</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">_itimediff</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">current</span><span class="p">,</span> <span class="n">ts</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="c1">// 更新 snd_buf</span>
+            <span class="n">ikcp_parse_ack</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">sn</span><span class="p">);</span>
+            <span class="n">ikcp_shrink_buf</span><span class="p">(</span><span class="n">kcp</span><span class="p">);</span>
+
+            <span class="c1">// maxack = 这次 input 的所有 ACK 包中最大的 sn</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">flag</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="n">maxack</span> <span class="o">=</span> <span class="n">sn</span><span class="p">;</span>
+                <span class="n">latest_ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">;</span>
+            <span class="p">}</span>    <span class="k">else</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> <span class="n">maxack</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="cp">#ifndef IKCP_FASTACK_CONSERVE
+</span>                    <span class="n">maxack</span> <span class="o">=</span> <span class="n">sn</span><span class="p">;</span>
+                    <span class="n">latest_ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">;</span>
+                <span class="cp">#else
+</span>                    <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">latest_ts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">maxack</span> <span class="o">=</span> <span class="n">sn</span><span class="p">;</span>
+                        <span class="n">latest_ts</span> <span class="o">=</span> <span class="n">ts</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="cp">#endif
+</span>                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="c1">// ...</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 如果有收到 ACK 包，记录用来做快速重传</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">flag</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ikcp_parse_fastack</span><span class="p">(</span><span class="n">kcp</span><span class="p">,</span> <span class="n">maxack</span><span class="p">,</span> <span class="n">latest_ts</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p>可以看到接收到 ACK 包后同样会需要 <code class="language-plaintext highlighter-rouge">ikcp_parse_ack</code> 和 <code class="language-plaintext highlighter-rouge">ikcp_shrink_buf</code> 来更新 <code class="language-plaintext highlighter-rouge">snd_buf</code>，另外还需要调用 <code class="language-plaintext highlighter-rouge">ikcp_update_ack</code> 来计算更新 rto （retransmission timeout，超时重传时间）。<code class="language-plaintext highlighter-rouge">ikcp_input</code> 计算收到的 ACK 包中最大序号，来记录做快速重传用。就这样，发送方收到 ACK 包，把发送数据从 <code class="language-plaintext highlighter-rouge">snd_buf</code> 中移除，该数据包可靠地送达到了接收方，一次完整的 ARQ 确认接收过程结束。</p>
+
+<h3 id="超时重传">超时重传</h3>
+
+<p>前面介绍的是 KCP 实现的 ARQ 中的 确认接收机制，ARQ 还需要一个超时重传来保证可靠性，下面我们来看看 KCP 是怎么做超时重传的。</p>
+
+<p>让我们回到 <code class="language-plaintext highlighter-rouge">ikcp_flush</code> 函数：</p>
+
+<details>
+<summary> 超时重传（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> <span class="nf">ikcp_flush</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="c1">// 发送 snd_buf</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_buf</span><span class="p">.</span><span class="n">next</span><span class="p">;</span> <span class="n">p</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_buf</span><span class="p">;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">segment</span> <span class="o">=</span> <span class="n">iqueue_entry</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">IKCPSEG</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+        <span class="kt">int</span> <span class="n">needsend</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 首次发送</span>
+            <span class="n">needsend</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span><span class="o">++</span><span class="p">;</span>
+            <span class="c1">// 设置 segment-&gt;rto</span>
+            <span class="c1">// 通过 segment-&gt;rto 计算 segment-&gt;resendts 超时重传时间</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">rto</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rx_rto</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">resendts</span> <span class="o">=</span> <span class="n">current</span> <span class="o">+</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">rto</span> <span class="o">+</span> <span class="n">rtomin</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">resendts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 超时重传</span>
+            <span class="n">needsend</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span><span class="o">++</span><span class="p">;</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">xmit</span><span class="o">++</span><span class="p">;</span>
+            <span class="c1">// nodelay 控制下一次超时重传时间的计算</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nodelay</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">segment</span><span class="o">-&gt;</span><span class="n">rto</span> <span class="o">+=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rx_rto</span><span class="p">;</span>
+            <span class="p">}</span>    <span class="k">else</span> <span class="p">{</span>
+                <span class="n">segment</span><span class="o">-&gt;</span><span class="n">rto</span> <span class="o">+=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rx_rto</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">segment</span><span class="o">-&gt;</span><span class="n">resendts</span> <span class="o">=</span> <span class="n">current</span> <span class="o">+</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">rto</span><span class="p">;</span>
+            <span class="n">lost</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">fastack</span> <span class="o">&gt;=</span> <span class="n">resent</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 快速重传</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">needsend</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 发送数据</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p>一旦当前时间 <code class="language-plaintext highlighter-rouge">current</code> 大于 <code class="language-plaintext highlighter-rouge">segment-&gt;resendts</code> 超时重传时间，说明在这段时间内，都没有收到接收方的 ACK 包，触发超时重传机制，<code class="language-plaintext highlighter-rouge">needsend = 1</code>，重新发送数据。</p>
+
+<p>有了确认接收和超时重传机制，KCP 就可以保证基础的可靠数据传输了。但是为了能够保持更稳定的数据流速，KCP 还做了更多的事情，下面我们一起看看 KCP 还做了那些优化。</p>
+
+<h2 id="kcp-提升流速的策略">KCP 提升流速的策略</h2>
+
+<h3 id="快速重传">快速重传</h3>
+
+<p>发送方发送了序号为 <code class="language-plaintext highlighter-rouge">sn</code> 和 <code class="language-plaintext highlighter-rouge">sn + 1</code> 两个数据包，如果只收到了 <code class="language-plaintext highlighter-rouge">sn + 1</code> 的 ACK 包，那可能是因为 <code class="language-plaintext highlighter-rouge">sn</code> 的 ACK 包在网路中还没到达，又或者 ACK 包丢了，又或者 <code class="language-plaintext highlighter-rouge">sn</code> 数据包丢了，如果此时还没到超时重传的时间，网络也还不太拥堵，只是因为某种原因而突发丢包，那么发送方主动提前发送 <code class="language-plaintext highlighter-rouge">sn</code> 数据包，可以帮助接收方更快地接收数据，提高流速。</p>
+
+<p>KCP 里面也相应实现了快速重传机制，也在 <code class="language-plaintext highlighter-rouge">ikcp_flush</code> 里面：</p>
+
+<details>
+<summary> 快速重传（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> <span class="nf">ikcp_flush</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="n">resent</span> <span class="o">=</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">fastresend</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">?</span> <span class="p">(</span><span class="n">IUINT32</span><span class="p">)</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">fastresend</span> <span class="o">:</span> <span class="mh">0xffffffff</span><span class="p">;</span>
+
+    <span class="c1">// 发送 snd_buf</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_buf</span><span class="p">.</span><span class="n">next</span><span class="p">;</span> <span class="n">p</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_buf</span><span class="p">;</span> <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">IKCPSEG</span> <span class="o">*</span><span class="n">segment</span> <span class="o">=</span> <span class="n">iqueue_entry</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">IKCPSEG</span><span class="p">,</span> <span class="n">node</span><span class="p">);</span>
+        <span class="kt">int</span> <span class="n">needsend</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">resendts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">fastack</span> <span class="o">&gt;=</span> <span class="n">resent</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 快速重传</span>
+            <span class="k">if</span> <span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span> <span class="o">&lt;=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">fastlimit</span> <span class="o">||</span>
+                <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">fastlimit</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">needsend</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="n">segment</span><span class="o">-&gt;</span><span class="n">xmit</span><span class="o">++</span><span class="p">;</span>
+                <span class="n">segment</span><span class="o">-&gt;</span><span class="n">fastack</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="n">segment</span><span class="o">-&gt;</span><span class="n">resendts</span> <span class="o">=</span> <span class="n">current</span> <span class="o">+</span> <span class="n">segment</span><span class="o">-&gt;</span><span class="n">rto</span><span class="p">;</span>
+                <span class="n">change</span><span class="o">++</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">needsend</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 发送数据</span>
+            <span class="c1">// ...</span>
+        <span class="p">}</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p>要出发快速重传，有两个条件：</p>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">segment-&gt;fastack &gt;= resent</code>，resent 是可配置的参数 <code class="language-plaintext highlighter-rouge">kcp-&gt;fastresend</code>，配置为 0 会关闭快速重传。<code class="language-plaintext highlighter-rouge">segment-&gt;fastack</code> 是在函数 <code class="language-plaintext highlighter-rouge">ikcp_parse_fastack</code> 里面设置的，这个函数是在 <code class="language-plaintext highlighter-rouge">ikcp_input</code> 里面调用，会根据 <code class="language-plaintext highlighter-rouge">ikcp_input</code> 算出的 <code class="language-plaintext highlighter-rouge">maxack</code> 来给所有 <code class="language-plaintext highlighter-rouge">sn</code> 小于 <code class="language-plaintext highlighter-rouge">maxack</code> 的 <code class="language-plaintext highlighter-rouge">segment-&gt;fastack</code> 加一，所以 <code class="language-plaintext highlighter-rouge">segment-&gt;fastack</code> 就是表示收到比 <code class="language-plaintext highlighter-rouge">sn</code> 大的包的次数。</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">segment-&gt;xmit &lt;= kcp-&gt;fastlimit || kcp-&gt;fastlimit &lt;= 0</code>，<code class="language-plaintext highlighter-rouge">setgment-&gt;xmit</code> 是发送次数，<code class="language-plaintext highlighter-rouge">kcp-&gt;fastlimit</code> 是可配置的最大快速重传次数，发送次数需要小于最大快速重传次数</li>
+</ul>
+
+<p>一旦满足快速重传的以上条件，KCP 就会执行快速重传，要注意快速重传并不会重置超时重传时间，原来的超时时间依然会生效。</p>
+
+<h3 id="缩短超时重传时间">缩短超时重传时间</h3>
+
+<p>超时重传是个很好的机制，但就是太花时间了，按照 TCP 的策略，每次超时重传时间翻倍，等待时间膨胀得很快，在等待时间内，很可能由于接收端的接收窗口已耗尽，无法接收新数据，而等待重传的包序号是在最前面，接收方要接收到重传的包才能把所有数据返回给上层，这种情况，整个网路的流速几乎为 0。KCP 增加了配置可以减缓等待的时间增长，而且也不会是翻倍，通过配置 <code class="language-plaintext highlighter-rouge">kcp-&gt;nodelay</code> 控制每次等待时间只会增长 1 倍的 RTO 或者 0.5 倍的 RTO，有效减缓等待时间的增长，帮助网路尽快恢复流速。</p>
+
+<h3 id="更新发送窗口">更新发送窗口</h3>
+
+<p>发送窗口表示的是同时传输的数据包数量，窗口越大，同时传输的数据越多，流速越大，但窗口过大，会导致网络拥塞，丢包率上升，数据重传增多，流速下降。所以发送窗口需要根据网络情况不断更新，慢慢趋近最优。 KCP 中关于发送窗口的代码：</p>
+
+<details>
+<summary> 发送窗口（点击展开代码） </summary>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="n">ikcpcb</span><span class="o">*</span> <span class="nf">ikcp_create</span><span class="p">(</span><span class="n">IUINT32</span> <span class="n">conv</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">user</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="c1">// snd_wnd，rcv_wnd 发送和接受的缓冲区大小</span>
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_wnd</span> <span class="o">=</span> <span class="n">IKCP_WND_SND</span><span class="p">;</span>    <span class="c1">// 32</span>
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rcv_wnd</span> <span class="o">=</span> <span class="n">IKCP_WND_RCV</span><span class="p">;</span>    <span class="c1">// 128</span>
+    <span class="c1">// 对端接收窗口大小              // 128</span>
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rmt_wnd</span> <span class="o">=</span> <span class="n">IKCP_WND_RCV</span>
+    <span class="c1">// 发送窗口 cwnd 初始化 0</span>
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="c1">// 发送窗口字节数大小，参与计算 cwnd</span>
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1">// 慢启动阈值，slow start threshold</span>
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span> <span class="o">=</span> <span class="n">IKCP_THRESH_INIT</span><span class="p">;</span>
+    <span class="c1">// nocwnd 是可配置参数，1 不考虑 cwnd</span>
+    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nocwnd</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">ikcp_flush</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="c1">// 发送数据时先计算 发送窗口大小，是发送缓冲区大小和对方接收窗口大小的小值</span>
+    <span class="n">cwnd</span> <span class="o">=</span> <span class="n">_imin_</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_wnd</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rmt_wnd</span><span class="p">);</span>
+    <span class="c1">// 默认还需要考虑 kcp-&gt;cwnd，即是不断更新的发送窗口</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">nocwnd</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">cwnd</span> <span class="o">=</span> <span class="n">_imin_</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span><span class="p">,</span> <span class="n">cwnd</span><span class="p">);</span>
+
+    <span class="c1">// 根据 cwnd 大小，snd_queue 移动到 snd_buf</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_nxt</span><span class="p">,</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_una</span> <span class="o">+</span> <span class="n">cwnd</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+    <span class="c1">// 发送数据</span>
+    <span class="n">resent</span> <span class="o">=</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">fastresend</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">?</span> <span class="p">(</span><span class="n">IUINT32</span><span class="p">)</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">fastresend</span> <span class="o">:</span> <span class="mh">0xffffffff</span><span class="p">;</span>
+    <span class="c1">// 触发超时重传 lost = 1</span>
+    <span class="c1">// 触发快速重传 change++</span>
+
+    <span class="c1">// 更新慢启动阈值和发送窗口</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">change</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 如果有触发快速重传，ssthresh 设置为网络上正在传输的数据包数量的一半</span>
+        <span class="n">IUINT32</span> <span class="n">inflight</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_nxt</span> <span class="o">-</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_una</span><span class="p">;</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span> <span class="o">=</span> <span class="n">inflight</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span> <span class="o">&lt;</span> <span class="n">IKCP_THRESH_MIN</span><span class="p">)</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span> <span class="o">=</span> <span class="n">IKCP_THRESH_MIN</span><span class="p">;</span>
+
+        <span class="c1">// 发送窗口为阈值再加上快速重传相关的 resent</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span> <span class="o">+</span> <span class="n">resent</span><span class="p">;</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">*</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">lost</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 如果有超时重传，触发慢启动, ssthresh 阈值为发送窗口的一半</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span> <span class="o">=</span> <span class="n">cwnd</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span> <span class="o">&lt;</span> <span class="n">IKCP_THRESH_MIN</span><span class="p">)</span>
+            <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span> <span class="o">=</span> <span class="n">IKCP_THRESH_MIN</span><span class="p">;</span>
+        <span class="c1">// 发送窗口回到 1，重新慢启动增长</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 因为初始化为 0，来到这里会再设置成 1</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">ikcp_input</span><span class="p">(</span><span class="n">ikcpcb</span> <span class="o">*</span><span class="n">kcp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="kt">long</span> <span class="n">size</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">IUINT32</span> <span class="n">prev_una</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_una</span><span class="p">;</span>
+    <span class="c1">// 处理接收的数据</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// ...</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ikcp_decode16u</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">wnd</span><span class="p">)</span>
+        <span class="c1">// rmt_wnd 是对方的接收窗口大小</span>
+        <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rmt_wnd</span> <span class="o">=</span> <span class="n">wnd</span>
+        <span class="c1">// ...</span>
+        <span class="c1">// 处理数据</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 最后更新发送窗口</span>
+    <span class="c1">// kcp-&gt;snd_una - prev_una &gt; 0，表示本次 input 有接受到 ACK 并且发送缓冲 snd_buf 有变化</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">_itimediff</span><span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">snd_una</span><span class="p">,</span> <span class="n">prev_una</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 再判断对方的接收窗口</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">&lt;</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rmt_wnd</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">IUINT32</span> <span class="n">mss</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">mss</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">&lt;</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">ssthresh</span><span class="p">)</span> <span class="p">{</span>
+                <span class="c1">// 小于慢启动阈值，双倍增长</span>
+                <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span><span class="o">++</span><span class="p">;</span>
+                <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">+=</span> <span class="n">mss</span><span class="p">;</span>
+
+            <span class="p">}</span>    <span class="k">else</span> <span class="p">{</span>
+                <span class="c1">// 大于慢启动阈值之后，通过公式更新 incr ，进而计算 cwnd</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">&lt;</span> <span class="n">mss</span><span class="p">)</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">=</span> <span class="n">mss</span><span class="p">;</span>
+                <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">+=</span> <span class="p">(</span><span class="n">mss</span> <span class="o">*</span> <span class="n">mss</span><span class="p">)</span> <span class="o">/</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">+</span> <span class="p">(</span><span class="n">mss</span> <span class="o">/</span> <span class="mi">16</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">((</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">mss</span> <span class="o">&lt;=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span><span class="o">++</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="c1">// 更新出来的值还要再比较下 rmt_wnd</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">&gt;</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rmt_wnd</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">cwnd</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rmt_wnd</span><span class="p">;</span>
+                <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">incr</span> <span class="o">=</span> <span class="n">kcp</span><span class="o">-&gt;</span><span class="n">rmt_wnd</span> <span class="o">*</span> <span class="n">mss</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+</details>
+
+<p>计算发送窗口 <code class="language-plaintext highlighter-rouge">kcp-&gt;cwnd</code> 的大小涉及的代码片段会稍微多一些，因为在发送和接收数据的时候，都会需要更新。<code class="language-plaintext highlighter-rouge">kcp-&gt;cwnd</code> 初始化为 0，
+之后会在第一次调用 <code class="language-plaintext highlighter-rouge">ikcp_flush</code> 的时候，判断小于 1 ，便修改成 1。之后发送方根据发送窗口大小，发送出相应数量的数据包，等待 ACK
+回复包。ACK 包在 <code class="language-plaintext highlighter-rouge">kcp-&gt;input</code> 中进行处理，<code class="language-plaintext highlighter-rouge">kcp-&gt;input</code> 中如果判断有 ACK 包，并有清除发送缓冲中的发送数据包，说明有数据包已经完成送达，<code class="language-plaintext highlighter-rouge">kcp-&gt;cwnd++</code>。实际上很可能是一次 <code class="language-plaintext highlighter-rouge">kcp-&gt;input</code> 只处理到一个 ACK 包，可以理解为，每收到一个 ACK 包都会有 <code class="language-plaintext highlighter-rouge">kcp-&gt;cwnd++</code>，这句自增实现的是翻倍的效果，譬如当前 <code class="language-plaintext highlighter-rouge">kcp-&gt;cwnd = 2</code>，发送两个数据包，收到两个 ACK 包，触发了两次自增，最后就是 <code class="language-plaintext highlighter-rouge">kcp-&gt;cwnd = 4</code> 翻倍。</p>
+
+<p><code class="language-plaintext highlighter-rouge">cwnd</code> 可以一直指数增长，直到超过慢启动阈值，或者发生拥堵超时重传，快速重传的情况。发生了超时重传之后，会触发慢启动，慢启动阈值 <code class="language-plaintext highlighter-rouge">ssthresh = kcp-&gt;cwnd / 2</code>，发送窗口 <code class="language-plaintext highlighter-rouge">kcp-&gt;cwnd = 1</code>，回到最初重新指数增长。如果发生了快速重传，KCP 先提前减少 <code class="language-plaintext highlighter-rouge">ssthresh</code>，也即是减少了 <code class="language-plaintext highlighter-rouge">cwnd</code> 指数增长的空间，降低增长速度，提前减缓拥堵的情况。</p>
+
+<p>KCP 还增加了一个配置 <code class="language-plaintext highlighter-rouge">nocwnd</code>，当 <code class="language-plaintext highlighter-rouge">nocwnd = 1</code>，发送数据是不再考虑发送窗口大小，直接让最大能发送的数量发送数据包，满足高速模式下的要求。</p>
+
+<h2 id="小结">小结</h2>
+
+<p>本文简单地分析了 KCP 的源码，并讨论了 KCP 上 ARQ 的实现，和一些 KCP 提升流速的策略。还有很多细节没有提到，感兴趣的可以自己翻 KCP 的源码对照着看，相信也能有不少的收获。</p>
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    Unless otherwise specified, all articles on this site are original works by <a href="https://disenone.github.io/en/" style="color:#51aded;"> Disenone </a>. Please indicate the source as <a href="" style="color:#51aded;"> KCP 源码剖析 </a> if you wish to reproduce them.
+                </p>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/en/2016/11/19/aparsing" data-toggle="tooltip" data-placement="top" title="C/C++ 的命令行参数处理总结">
+                            前一篇<br>
+                            <span>C/C++ 的命令行参数处理总结</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/en/2021/03/31/cpp-preprocess" data-toggle="tooltip" data-placement="top" title="C/C++ 宏编程解析">
+                            后一篇<br>
+                            <span>C/C++ 宏编程解析</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br><br>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2019/12/17/kcp>" class="leancloud_visitors" data-flag-title="KCP 源码剖析">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js" data-repo="disenone/disenone.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg==" data-category="Announcements" data-category-id="DIC_kwDOAQz-AM4CT6GS" data-mapping="og:title" data-strict="1" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="zh-CN" data-loading="lazy" crossorigin="anonymous" async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/en/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                © 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+</body>
+
+</html>

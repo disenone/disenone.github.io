@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>Unity第三人称相机构建(上) - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/en//2014/03/13/unity-3rdcamera-create0">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/en/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/en/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/en/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/en/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/en/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="简体中文" href=" /2014/03/13/unity-3rdcamera-create0">
+                            
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/en/Tags/#dev" title="dev">dev</a>
+                        
+                    </div>
+                    <h1>Unity第三人称相机构建(上)</h1>
+                    
+                    <span class="meta">Posted by Disenone on March 13, 2014</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    Unless otherwise specified, all articles on this site are original works by <a href="https://disenone.github.io/en/" style = "color:#51aded;"> Disenone </a>. Please indicate the source as <a href ="" style = "color:#51aded;"> Unity第三人称相机构建(上) </a> if you wish to reproduce them.
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="Unity第三人称相机构建(上)" />
+
+<p>我想在Unity中创建一个第三人称相机，相机的行为参考《魔兽世界》的第三人称相机，具体的需求是：</p>
+
+<ol>
+  <li>鼠标左键：控制相机围绕人物旋转，人物不旋转</li>
+  <li>鼠标右键：控制相机围绕人物旋转，人物的前方向(Unity中的tranform.forward)相应旋转，人物上方向不变</li>
+  <li>鼠标左键旋转后，再右键旋转，角色前方向马上根据左键的旋转做调整，再根据右键旋转，此时等价于两次都是右键旋转</li>
+  <li>鼠标滚轮：控制相机远近</li>
+  <li>相机不能穿过任何刚性物体</li>
+  <li>相机在离开碰撞的刚性物体后，慢慢回到原来的距离上</li>
+  <li>如果相机在碰到物体时，使用鼠标滚轮操作相机拉近，相机需要马上反应，此后第6点不再发生</li>
+  <li>相机在旋转中碰到地面，停止围绕人物上下旋转，改为围绕自身上下旋转，左右旋转依然是围绕人物</li>
+</ol>
+
+<p>这个需求可以先分成两部分：相机旋转，相机刚性。简单起见，这里先来解决相机旋转的问题，也就是需求的前3点。</p>
+
+<h2 id="相机位置表示">相机位置表示</h2>
+<p>在正式解决相机操作前，还有一个问题需要解决：相机位置的表示。这可以用多种方式：</p>
+
+<ul>
+  <li>相机的世界坐标</li>
+  <li>相机相对于人物的坐标</li>
+  <li>相机在人物坐标系中的方向和距离</li>
+</ul>
+
+<p>因为在我们的需求中，相机是根据人物位置进行变换的，所以我这里使用第三种方式，而且在控制中相机一直瞄准人物，所以在相机内只需要保存距离信息：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">float</span> <span class="n">curDistance</span> <span class="p">=</span> <span class="m">5F</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="相机旋转">相机旋转</h2>
+<p>继续细分相机旋转的行为，可以分成左键旋转和右键旋转，下面我们来一步一步地完成这两个旋转。首先我把相机设为人物的子物体(children)，这样人物的一些基本的移动相机都会自动的跟踪。</p>
+
+<p>###左键旋转###
+单单看左键旋转，需求很简单：<strong>相机旋转，人物不旋转</strong>，这就相当于一个观察模型的相机，相机可以任意角度观察中心物体。</p>
+
+<p>在Unity中获取鼠标左键状态使用语句：<code class="language-plaintext highlighter-rouge">Input.GetMouseButton(0)</code>（注：后面涉及到代码的地方，都是使用C#），明显，右键就是<code class="language-plaintext highlighter-rouge">Input.GetMouseButton(1)</code>。获取鼠标光标的移动位置（可以理解为帧之间光标在X-Y上的偏移量）信息是：<code class="language-plaintext highlighter-rouge">Input.GetAxis("Mouse X"); Input.GetAxis("Mouse Y")</code>。那么我们可以先来获取鼠标左键按下后光标的移动信息：</p>
+
+<figure class="highlight"><pre><code class="language-csharp" data-lang="csharp"><span class="k">if</span> <span class="p">(</span><span class="n">Input</span><span class="p">.</span><span class="nf">GetMouseButton</span><span class="p">(</span><span class="m">0</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">x</span> <span class="p">=</span> <span class="n">Input</span><span class="p">.</span><span class="nf">GetAxis</span><span class="p">(</span><span class="s">"Mouse X"</span><span class="p">);</span>
+    <span class="kt">float</span> <span class="n">y</span> <span class="p">=</span> <span class="n">Input</span><span class="p">.</span><span class="nf">GetAxis</span><span class="p">(</span><span class="s">"Mouse Y"</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>代码很简单，那下面就是关键的地方：如何控制相机来旋转。要理解旋转，这里需要一些关于四元数的知识（网上资料很多，这里就不列举了），四元数重要的一点是它可以很简单地构造旋转，特别是围绕某个向量的旋转，理解四元数后，实现相机围绕人物的旋转就不难了。</p>
+
+<p>另外还有一点要注意的是，四元数旋转轴只是一个向量，以原点为出发点，如果要以世界坐标系中的某点<code class="language-plaintext highlighter-rouge">O</code>为原点，以该点为出发点的向量<code class="language-plaintext highlighter-rouge">V</code>为旋转轴，就需要进行坐标系的变换，简单地说，就是把需要旋转的点<code class="language-plaintext highlighter-rouge">P</code>变换到，以<code class="language-plaintext highlighter-rouge">O</code>为原点的坐标系中，根据<code class="language-plaintext highlighter-rouge">V</code>旋转，再变换会世界坐标系。根据这些操作，可以写出一个功能函数：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Vector3</span> <span class="nf">MyRotate</span><span class="p">(</span><span class="n">Vector3</span> <span class="n">oldPosition</span><span class="p">,</span> <span class="kt">float</span> <span class="n">angle</span><span class="p">,</span> <span class="n">Vector3</span> <span class="n">axis</span><span class="p">,</span> <span class="n">Vector3</span> <span class="n">axisPosition</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// 构造一个四元数，以axis为旋转轴，这是在人物坐标系中的旋转</span>
+    <span class="n">Quaternion</span> <span class="n">rotation</span> <span class="p">=</span> <span class="n">Quaternion</span><span class="p">.</span><span class="nf">AngleAxis</span><span class="p">(</span><span class="n">angle</span><span class="p">,</span> <span class="n">axis</span><span class="p">);</span>
+    <span class="c1">// 这里做的就是坐标系的变换，把相机的世界坐标变换到人物坐标系下的坐标</span>
+    <span class="n">Vector3</span> <span class="n">offset</span> <span class="p">=</span> <span class="n">oldPosition</span> <span class="p">-</span> <span class="n">axisPosition</span><span class="p">;</span>
+    <span class="c1">// 计算旋转并变换回世界坐标系中</span>
+    <span class="k">return</span> <span class="n">axisPosition</span> <span class="p">+</span> <span class="p">(</span><span class="n">rotation</span> <span class="p">*</span> <span class="n">offset</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">Quaternion</code>是Unity中表示四元数的类型，加上之前鼠标左键的检测，就可以完成左键控制相机左右旋转。</p>
+
+<p>鼠标左右移动控制相机左右旋转的代码就可以直接给出：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">newForward</span> <span class="p">=</span> <span class="nf">MyRotate</span><span class="p">(</span><span class="n">newForward</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">up</span><span class="p">,</span> <span class="n">Vector3</span><span class="p">.</span><span class="n">zero</span><span class="p">);</span>
+</code></pre></div></div>
+<p>因为这里只有前向量做旋转，没有涉及到坐标系的转换，所以第四个参数为<code class="language-plaintext highlighter-rouge">Vector3.zero</code>。</p>
+
+<p>控制上下旋转比左右旋转难理解一点，因为此时的旋转轴是会一直变化的(这里假设人物的up一直是Y轴的正方向)。注意的相机也是一直在旋转，并且视点中心一直对准人物，那么相机的右方向(right)就是我们想要围绕着旋转的轴了(把相机right想象成人物的right)，这样理解，那么上下旋转的代码也很简单了：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">newForward</span> <span class="p">=</span> <span class="nf">MyRotate</span><span class="p">(</span><span class="n">newForward</span><span class="p">,</span> <span class="p">-</span><span class="n">y</span><span class="p">,</span> <span class="n">transform</span><span class="p">.</span><span class="n">right</span><span class="p">,</span> <span class="n">Vector3</span><span class="p">.</span><span class="n">zero</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>###右键旋转###
+做了左键旋转，右键旋转就很简单了，只需要在左右旋转的时候设置人物的前方向：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">player</span><span class="p">.</span><span class="n">forward</span> <span class="p">=</span> <span class="n">Vector3</span><span class="p">.</span><span class="nf">Normalize</span><span class="p">(</span><span class="k">new</span> <span class="nf">Vector3</span><span class="p">(</span><span class="n">oldForward</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">oldForward</span><span class="p">.</span><span class="n">z</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>上下旋转跟左键的代码一样。</p>
+
+<p>###先左键，后右键###
+上面虽然可以分别左键旋转，右键旋转，但是一旦先用左键旋转，再用右键操作的时候，问题就会出现：人物的前方向和相机的前方向不同了！那么相机和人物的正方向就从此分离，实际操作起来很奇怪。那么我们在用右键旋转的时候就要先把人物调整为跟相机的正方向一致：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">player</span><span class="p">.</span><span class="n">forward</span> <span class="p">=</span> <span class="n">Vector3</span><span class="p">.</span><span class="nf">Normalize</span><span class="p">(</span><span class="k">new</span> <span class="nf">Vector3</span><span class="p">(</span><span class="n">oldForward</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">oldForward</span><span class="p">.</span><span class="n">z</span><span class="p">));</span>
+
+</code></pre></div></div>
+
+<hr />
+
+<p>###欧拉角万向锁###
+至此，相机的旋转差不多就完成，不过还有一个问题要注意：欧拉角万向锁。原理这里就不细讲，有兴趣的朋友可以自行搜索，针对这里相机的情况，就是当相机上下旋转到跟人物的上方向重合的时候，相机的视角会发生突变。这是因为相机到达人物的头顶或者脚底，相机的上方向会发生突变(因为相机的上方向的Y值一直都要大于零)，所以我们需要限制相机的上下旋转范围，防止发生万向锁。操作很简单，就是限制相机的前方向与人物的上方向的夹角的范围：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">((</span><span class="n">Vector3</span><span class="p">.</span><span class="nf">Dot</span><span class="p">(</span><span class="n">transform</span><span class="p">.</span><span class="n">forward</span><span class="p">,</span> <span class="n">transform</span><span class="p">.</span><span class="n">parent</span><span class="p">.</span><span class="n">up</span><span class="p">)</span> <span class="p">&gt;=</span> <span class="p">-</span><span class="m">0.95F</span> <span class="p">||</span> <span class="n">y</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span> <span class="p">&amp;&amp;</span>
+    <span class="p">(</span><span class="n">Vector3</span><span class="p">.</span><span class="nf">Dot</span><span class="p">(</span><span class="n">transform</span><span class="p">.</span><span class="n">forward</span><span class="p">,</span> <span class="n">transform</span><span class="p">.</span><span class="n">parent</span><span class="p">.</span><span class="n">up</span><span class="p">)</span> <span class="p">&lt;=</span> <span class="m">0.95F</span> <span class="p">||</span> <span class="n">y</span> <span class="p">&lt;</span> <span class="m">0</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>###完整代码###</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// rotate oldPosition around a axis starting at axisPosition</span>
+<span class="n">Vector3</span> <span class="nf">MyRotate</span><span class="p">(</span><span class="n">Vector3</span> <span class="n">oldPosition</span><span class="p">,</span> <span class="kt">float</span> <span class="n">angle</span><span class="p">,</span> <span class="n">Vector3</span> <span class="n">axis</span><span class="p">,</span> <span class="n">Vector3</span> <span class="n">axisPosition</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">Quaternion</span> <span class="n">rotation</span> <span class="p">=</span> <span class="n">Quaternion</span><span class="p">.</span><span class="nf">AngleAxis</span><span class="p">(</span><span class="n">angle</span><span class="p">,</span> <span class="n">axis</span><span class="p">);</span>
+    <span class="n">Vector3</span> <span class="n">offset</span> <span class="p">=</span> <span class="n">oldPosition</span> <span class="p">-</span> <span class="n">axisPosition</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">axisPosition</span> <span class="p">+</span> <span class="p">(</span><span class="n">rotation</span> <span class="p">*</span> <span class="n">offset</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// rotate oldForward, player forward may change when use mouse RB</span>
+<span class="n">Vector3</span> <span class="nf">RotateIt</span><span class="p">(</span><span class="n">Vector3</span> <span class="n">oldForward</span><span class="p">,</span> <span class="n">Vector3</span> <span class="n">up</span><span class="p">,</span> <span class="n">Vector3</span> <span class="n">right</span><span class="p">,</span> <span class="n">Transform</span> <span class="n">player</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">Vector3</span> <span class="n">newForward</span> <span class="p">=</span> <span class="p">-</span><span class="n">oldForward</span><span class="p">;</span>
+    <span class="c1">// mouse LB RB rotate camera and character</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">Input</span><span class="p">.</span><span class="nf">GetMouseButton</span><span class="p">(</span><span class="m">0</span><span class="p">)</span> <span class="p">^</span> <span class="n">Input</span><span class="p">.</span><span class="nf">GetMouseButton</span><span class="p">(</span><span class="m">1</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="kt">float</span> <span class="n">x</span> <span class="p">=</span> <span class="n">Input</span><span class="p">.</span><span class="nf">GetAxis</span><span class="p">(</span><span class="s">"Mouse X"</span><span class="p">)</span> <span class="p">*</span> <span class="n">rotateSpeed</span><span class="p">;</span>
+        <span class="kt">float</span> <span class="n">y</span> <span class="p">=</span> <span class="n">Input</span><span class="p">.</span><span class="nf">GetAxis</span><span class="p">(</span><span class="s">"Mouse Y"</span><span class="p">)</span> <span class="p">*</span> <span class="n">rotateSpeed</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="p">!=</span> <span class="m">0F</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">newForward</span> <span class="p">=</span> <span class="nf">MyRotate</span><span class="p">(</span><span class="n">newForward</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">up</span><span class="p">,</span> <span class="n">Vector3</span><span class="p">.</span><span class="n">zero</span><span class="p">);</span>
+
+            <span class="c1">// mouse RB, character rotate together</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">Input</span><span class="p">.</span><span class="nf">GetMouseButton</span><span class="p">(</span><span class="m">1</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">player</span><span class="p">.</span><span class="n">forward</span> <span class="p">=</span> <span class="n">Vector3</span><span class="p">.</span><span class="nf">Normalize</span><span class="p">(</span><span class="k">new</span> <span class="nf">Vector3</span><span class="p">(</span><span class="n">oldForward</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> 
+                    <span class="n">oldForward</span><span class="p">.</span><span class="n">z</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="p">!=</span> <span class="m">0F</span><span class="p">)</span>
+        <span class="p">{</span>
+
+            <span class="k">if</span> <span class="p">((</span><span class="n">Vector3</span><span class="p">.</span><span class="nf">Dot</span><span class="p">(</span><span class="n">transform</span><span class="p">.</span><span class="n">forward</span><span class="p">,</span> <span class="n">up</span><span class="p">)</span> <span class="p">&gt;=</span> <span class="p">-</span><span class="m">0.95F</span> <span class="p">||</span> <span class="n">y</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span>
+                <span class="p">&amp;&amp;</span> <span class="p">(</span><span class="n">Vector3</span><span class="p">.</span><span class="nf">Dot</span><span class="p">(</span><span class="n">transform</span><span class="p">.</span><span class="n">forward</span><span class="p">,</span> <span class="n">up</span><span class="p">)</span> <span class="p">&lt;=</span> <span class="m">0.95F</span> <span class="p">||</span> <span class="n">y</span> <span class="p">&lt;</span> <span class="m">0</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">newForward</span> <span class="p">=</span> <span class="nf">MyRotate</span><span class="p">(</span><span class="n">newForward</span><span class="p">,</span> <span class="p">-</span><span class="n">y</span><span class="p">,</span> <span class="n">transform</span><span class="p">.</span><span class="n">right</span><span class="p">,</span> <span class="n">Vector3</span><span class="p">.</span><span class="n">zero</span><span class="p">);</span>
+
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="p">-</span><span class="n">newForward</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    Unless otherwise specified, all articles on this site are original works by <a href="https://disenone.github.io/en/" style = "color:#51aded;"> Disenone </a>. Please indicate the source as <a href ="" style = "color:#51aded;"> Unity第三人称相机构建(上) </a> if you wish to reproduce them.
+                </p>
+
+                <ul class="pager">
+                    
+                    
+                    <li class="next">
+                        <a href="/en/2014/03/14/unity-3rdcamera-create1" data-toggle="tooltip" data-placement="top" title="Unity第三人称相机构建(下)">
+                            后一篇<br>
+                            <span>Unity第三人称相机构建(下)</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br/><br/>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2014/03/13/unity-3rdcamera-create0>" class="leancloud_visitors" data-flag-title="Unity第三人称相机构建(上)">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="og:title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/en/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+</body>
+
+</html>

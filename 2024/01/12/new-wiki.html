@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>欢迎访问新的博客 - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/2024/01/12/new-wiki">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="English" href="/en/2024/01/12/new-wiki">
+                            
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/Tags/#dev" title="dev">dev</a>
+                        
+                        <a class="tag" href="/Tags/#game" title="game">game</a>
+                        
+                    </div>
+                    <h1>欢迎访问新的博客</h1>
+                    
+                    <span class="meta">Posted by Disenone on January 12, 2024</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> 欢迎访问新的博客 </a>。
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="欢迎访问新的博客" />
+
+<p>本博客已经半废弃，新的文章会更新在新的博客里面，欢迎访问 <a href="https://disenone.github.io/wiki/">wiki</a></p>
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> 欢迎访问新的博客 </a>。
+                </p>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2023/01/12/python-talk-builtin" data-toggle="tooltip" data-placement="top" title="Python 杂谈 1 - 探究 __builtins__">
+                            前一篇<br>
+                            <span>Python 杂谈 1 - 探究 __builtins__</span>
+                        </a>
+                    </li>
+                    
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br/><br/>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2024/01/12/new-wiki>" class="leancloud_visitors" data-flag-title="欢迎访问新的博客">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="og:title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+
+
+
+</body>
+
+</html>

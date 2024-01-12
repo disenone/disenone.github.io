@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>使用 Visual Studio 2015 编译 Python 2.7.11 - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/2016/06/01/vs2015-python">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="English" href="/en/2016/06/01/vs2015-python">
+                            
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/Tags/#dev" title="dev">dev</a>
+                        
+                    </div>
+                    <h1>使用 Visual Studio 2015 编译 Python 2.7.11</h1>
+                    
+                    <span class="meta">Posted by Disenone on June 1, 2016</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> 使用 Visual Studio 2015 编译 Python 2.7.11 </a>。
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="使用 Visual Studio 2015 编译 Python 2.7.11" />
+
+<p><img src="https://img.shields.io/badge/python-2.7.11-brightgreen.svg" alt="" style="display: inline-block" />
+<img src="https://img.shields.io/badge/vs-2015-68217A.svg" alt="" style="display: inline-block" /></p>
+
+<h2 id="原因">原因</h2>
+
+<p>Python 2.7 的官方版本支持 Visual Studio 2010 以下版本来编译，参考 <code class="language-plaintext highlighter-rouge">PCbuild\readme.txt</code>：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1.  Install Microsoft Visual Studio 2008, any edition.
+2.  Install Microsoft Visual Studio 2010, any edition, or Windows SDK 7.1 and any version of Microsoft Visual Studio newer than 2010.
+</code></pre></div></div>
+
+<p>如果你想在 Windows 下自己倒腾 Python，譬如编译个 Debug 版本、自己改改源代码等，那么最简单的方法就是装一个 VS2010。
+但是对我个人来说， 我更想要用 VS2015 来编译 Python，原因主要有：</p>
+
+<ul>
+  <li>VS2010 实在有点过时，使用起来功能和体验比 VS2015 要差得多。一直用着 VS2015，要我再装个 VS2010 实在不愿意。</li>
+  <li>由于一直用 VS2015，你会使用它来写一些自己的程序，如果你想要把 Python 嵌入进去，那你就需要使用相同版本的 VS 来编译你的程序，如果使用不同版本的 VS，那会出现各种无法预料的事情。<a href="http://siomsystems.com/mixing-visual-studio-versions/">这里有更详细的解释</a>。</li>
+</ul>
+
+<p>所以我开始着手用 VS2015 搞定 Python 2.7.11 版本（当前的 Python 2.7 最新版本）。</p>
+
+<p>要注意，<strong>Python 3.x 已经支持用 VS2015 来编译</strong>。</p>
+
+<h2 id="源码下载">源码下载</h2>
+
+<p>Python 的版本当然就是 2.7.11，另外还有一些第三方的模块，具体可以运行 Python 源码目录下 <code class="language-plaintext highlighter-rouge">PCbuild\get_externals.bat</code> 脚本获取所有编译需要的模块，注意你需要安装 svn ，把 svn.exe 添加到系统 PATH 里面。</p>
+
+<p>下载可能很不稳定，并且整个过程都有可能因为网络问题而终止，所以还是推荐直接在我的github上下载externals目录：<a href="https://github.com/disenone/wpython-2.7.11/tree/e13f43a3b72ae2bdf4d2950c6364750ae668cbf4/externals">我的 Python 版本</a></p>
+
+<h2 id="编译过程">编译过程</h2>
+
+<h3 id="第三方模块">第三方模块</h3>
+
+<p>首先要解决的是第三方的模块，主要是 tcl, tk, tcltk。</p>
+
+<p>修改文件 <code class="language-plaintext highlighter-rouge">externals/tcl-8.5.15.0/win/makefile.vc</code>，把 434 行改成</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- cdebug = -Zi -WX $(DEBUGFLAGS)
++ cdebug = -Zi -WX- $(DEBUGFLAGS)
+</code></pre></div></div>
+
+<p>关于选项 <code class="language-plaintext highlighter-rouge">WX</code>，可以看微软的官方文档：<a href="https://msdn.microsoft.com/en-us/library/ms235592.aspx">/WX (Treat Linker Warnings as Errors)</a></p>
+
+<p>再来改<code class="language-plaintext highlighter-rouge">PCbuild/tk.vcxproj</code>，用文本编辑器打开，修改 63, 64 行</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- &lt;TkOpts&gt;msvcrt&lt;/TkOpts&gt;
+- &lt;TkOpts Condition="$(Configuration) == 'Debug'"&gt;symbols,msvcrt&lt;/TkOpts&gt;
++ &lt;TkOpts&gt;msvcrt,noxp&lt;/TkOpts&gt;
++ &lt;TkOpts Condition="$(Configuration) == 'Debug'"&gt;symbols,msvcrt,noxp&lt;/TkOpts&gt;
+</code></pre></div></div>
+
+<p>改<code class="language-plaintext highlighter-rouge">PCbuild/tcltk.props</code>，用文本编辑器打开，修改41行</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- &lt;BuildDirTop&gt;$(BuildDirTop)_VC9&lt;/BuildDirTop&gt;
++ &lt;BuildDirTop&gt;$(BuildDirTop)_VC13&lt;/BuildDirTop&gt;
+</code></pre></div></div>
+
+<p>由于 VS2015 取消了 <code class="language-plaintext highlighter-rouge">timezone</code> 的定义，改为 <code class="language-plaintext highlighter-rouge">_timezone</code>，所以代码里面用到 <code class="language-plaintext highlighter-rouge">timezone</code> 的地方都要改成 <code class="language-plaintext highlighter-rouge">_timezone</code>，第三方模块只需要改文件<code class="language-plaintext highlighter-rouge">externals/tcl-8.5.15.0/win/tclWinTime.c</code>，在文件的前面加上：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#if defined _MSC_VER &amp;&amp; _MSC_VER &gt;= 1900
+#define timezone _timezone
+#endif
+</code></pre></div></div>
+
+<h3 id="改-python-源码">改 Python 源码</h3>
+
+<p><code class="language-plaintext highlighter-rouge">timezone</code>的问题在 Python 的模块 <code class="language-plaintext highlighter-rouge">time</code> 里面也有，修改 767 行</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- #ifdef __CYGWIN__
++ #if defined(__CYGWIN__) || defined(_MSC_VER) &amp;&amp; _MSC_VER &gt;= 1900
+</code></pre></div></div>
+
+<p>另外由于在 Windows 下 Python 用了一种特殊的方法来检查文件句柄的有效性，而这种方法在 VS2015 中被彻底禁止了，会出现编译错误，所以先改掉。文件 <code class="language-plaintext highlighter-rouge">Include/fileobject.h</code>，73、80 行：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>73 - #if defined _MSC_VER &amp;&amp; _MSC_VER &gt;= 1400
+73 + #if defined _MSC_VER &amp;&amp; _MSC_VER &gt;= 1400 &amp;&amp; _MSC_VER &lt; 1900
+
+80 - #elif defined _MSC_VER &amp;&amp; _MSC_VER &gt;= 1200
+80 + #elif defined _MSC_VER &amp;&amp; _MSC_VER &gt;= 1200 &amp;&amp; _MSC_VER &lt; 1400
+</code></pre></div></div>
+
+<p>文件<code class="language-plaintext highlighter-rouge">Modules/posixmodule.c</code>，532 行：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- #if defined _MSC_VER &amp;&amp; _MSC_VER &gt;= 1400
++ #if defined _MSC_VER &amp;&amp; _MSC_VER &gt;= 1400 &amp;&amp; _MSC_VER &lt; 1900
+</code></pre></div></div>
+
+<p>至此，Python 就可以编译通过。更具体的修改可以看我 commit 的内容：<a href="https://github.com/disenone/wpython-2.7.11/commit/4037e2d806518dbf06ffb8ee5c46f419ef8d7edf">modify to build by vs2015</a></p>
+
+<h3 id="检查无效句柄">检查无效句柄</h3>
+
+<p>虽然编译通过了，但由于是粗暴地忽略无效文件句柄，直接导致的后果是一旦访问无效的句柄（譬如对同一个文件<code class="language-plaintext highlighter-rouge">close</code>两次），Python 就会直接 assert failed，程序 crash，这样的 Python 根本没法用啊。Python 就是用了一种很特殊的方法来避免这种情况，可惜在 VS2015 里面不能用了，注释是这样解释的：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Microsoft CRT in VS2005 and higher will verify that a filehandle is valid and raise an assertion if it isn't.
+</code></pre></div></div>
+
+<p>幸好已经有了解决方法，我是在 Python 的 issue 里面看到的，地址在这里：<a href="http://psf.upfronthosting.co.za/roundup/tracker/issue23524">issue23524</a>, <a href="http://psf.upfronthosting.co.za/roundup/tracker/issue25759">issue25759</a>。这种方法也是用在现在 Python 3.x 里面。</p>
+
+<p>具体地说就是在使用文件句柄的时候禁止掉 Windows 的 assert crash 机制，改为检查错误码。那要怎么禁止 Windows 的 assert 机制呢？答案就是用自己的错误处理函数替代 Windows 默认的处理函数，关键的代码：</p>
+
+<p>新建文件<code class="language-plaintext highlighter-rouge">PC/invalid_parameter_handler.c</code>，定义我们自己的错误处理函数，可以暂时忽略发生的错误</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#ifdef _MSC_VER
+</span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span>
+<span class="cp">#if _MSC_VER &gt;= 1900
+</span><span class="cm">/* pyconfig.h uses this function in the _Py_BEGIN_SUPPRESS_IPH/_Py_END_SUPPRESS_IPH
+ * macros. It does not need to be defined when building using MSVC
+ * earlier than 14.0 (_MSC_VER == 1900).
+ */</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="kr">__cdecl</span> <span class="nf">_silent_invalid_parameter_handler</span><span class="p">(</span>
+    <span class="kt">wchar_t</span> <span class="k">const</span><span class="o">*</span> <span class="n">expression</span><span class="p">,</span>
+    <span class="kt">wchar_t</span> <span class="k">const</span><span class="o">*</span> <span class="n">function</span><span class="p">,</span>
+    <span class="kt">wchar_t</span> <span class="k">const</span><span class="o">*</span> <span class="n">file</span><span class="p">,</span>
+    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">line</span><span class="p">,</span>
+	<span class="kt">uintptr_t</span> <span class="n">pReserved</span><span class="p">)</span> 
+<span class="p">{}</span>
+
+<span class="n">_invalid_parameter_handler</span> <span class="n">_Py_silent_invalid_parameter_handler</span> <span class="o">=</span> <span class="n">_silent_invalid_parameter_handler</span><span class="p">;</span>
+
+<span class="cp">#endif
+</span>
+<span class="cp">#endif
+</span></code></pre></div></div>
+
+<p>定义两个宏方便更换错误处理函数，要注意是暂时的更换，之后是需要换回系统默认的</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#if defined _MSC_VER &amp;&amp; _MSC_VER &gt;= 1900
+</span>
+<span class="k">extern</span> <span class="n">_invalid_parameter_handler</span> <span class="n">_Py_silent_invalid_parameter_handler</span><span class="p">;</span>
+<span class="cp">#define _Py_BEGIN_SUPPRESS_IPH { _invalid_parameter_handler _Py_old_handler = \
+    _set_thread_local_invalid_parameter_handler(_Py_silent_invalid_parameter_handler);
+#define _Py_END_SUPPRESS_IPH _set_thread_local_invalid_parameter_handler(_Py_old_handler); }
+</span>
+<span class="cp">#else
+</span>
+<span class="cp">#define _Py_BEGIN_SUPPRESS_IPH
+#define _Py_END_SUPPRESS_IPH
+</span>
+<span class="cp">#endif </span><span class="cm">/* _MSC_VER &gt;= 1900 */</span><span class="cp">
+</span></code></pre></div></div>
+
+<p>之后在有可能触发 Windows 文件句柄错误的地方，前后分别加上宏<code class="language-plaintext highlighter-rouge">_Py_BEGIN_SUPPRESS_IPH</code> 和 <code class="language-plaintext highlighter-rouge">_Py_END_SUPPRESS_IPH</code>，之后再检查错误码就可以了，需要修改到的地方不少，参考别人的 commit 来修改：
+<a href="https://github.com/kovidgoyal/cpython/commit/a9ec814d466d3c0139d10b69666f88eed10e4940">在这里</a></p>
+
+<h2 id="结束">结束</h2>
+
+<p>至此 Python 2.7.11 就可以在 VS2015 里面正常编译和运行了，不过由于 Python 官方是不推荐这样设置</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>***WARNING***
+Building Python 2.7 for Windows using any toolchain that doesn't link
+against MSVCRT90.dll is *unsupported* as the resulting python.exe will
+not be able to use precompiled extension modules that do link against
+MSVCRT90.dll.
+</code></pre></div></div>
+
+<p>所以使用的时候最好要注意一下。</p>
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> 使用 Visual Studio 2015 编译 Python 2.7.11 </a>。
+                </p>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2014/03/30/unity-light-scattering" data-toggle="tooltip" data-placement="top" title="Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)">
+                            前一篇<br>
+                            <span>Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2016/06/11/memory-leak-detector" data-toggle="tooltip" data-placement="top" title="编写 Windows 下的 Memory Leak Detector">
+                            后一篇<br>
+                            <span>编写 Windows 下的 Memory Leak Detector</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br/><br/>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2016/06/01/vs2015-python>" class="leancloud_visitors" data-flag-title="使用 Visual Studio 2015 编译 Python 2.7.11">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="og:title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+</body>
+
+</html>

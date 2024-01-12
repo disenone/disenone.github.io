@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>游戏 AOI 算法解析和性能实测 - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/2021/11/18/aoi-tesing">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="English" href="/en/2021/11/18/aoi-tesing">
+                            
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/Tags/#dev" title="dev">dev</a>
+                        
+                        <a class="tag" href="/Tags/#game" title="game">game</a>
+                        
+                    </div>
+                    <h1>游戏 AOI 算法解析和性能实测</h1>
+                    
+                    <span class="meta">Posted by Disenone on November 18, 2021</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> 游戏 AOI 算法解析和性能实测 </a>。
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="游戏 AOI 算法解析和性能实测" />
+
+<h3 id="引子">引子</h3>
+
+<p><code class="language-plaintext highlighter-rouge">AOI</code> (Area Of Interest) 在多人在线游戏中是很基本的功能，玩家需要接收进入视野范围内的其他玩家或者实体 (Entity) 的信息。计算玩家视野范围内存在哪些实体，有哪些实体进入或离开视野的算法，我们一般称之为 <code class="language-plaintext highlighter-rouge">AOI</code> 算法。</p>
+
+<p>本文讨论九宫格和十字链两种 <code class="language-plaintext highlighter-rouge">AOI</code> 算法，并给出两种算法的实测性能分析，让你用起来心中有数，遇事不慌。</p>
+
+<p>文中会提到玩家和实体两种词，实体是游戏中物体的概念，玩家是拥有 AOI 的实体。</p>
+
+<p>文中代码可在这里找到：<a href="https://github.com/disenone/AoiTesting">AoiTesting</a>。</p>
+
+<h3 id="九宫格">九宫格</h3>
+
+<p>所谓九宫格，是把场景内所有实体的位置按照格子划分，譬如划分成边长 200 的正方形，要找出中心玩家 AOI 范围内的其他实体，就把这个范围内涉及到的格子内的玩家都做一遍比较。</p>
+
+<p>例如场景每 100 毫秒会 Tick 一次，在 Tick 中我们可以这样更新玩家的 AOI：</p>
+
+<ul>
+  <li>以玩家位置为中心，AOI 半径计算涉及到的格子集合</li>
+  <li>对格子集合中的实体逐个计算跟玩家的距离</li>
+  <li>距离小于 AOI 半径的实体集合则是玩家的新的 AOI</li>
+</ul>
+
+<p>九宫格算法做起来很简单，算法用几句话就能描述清楚了，具体的性能分析我们留到后面，先来看看十字链表算法。</p>
+
+<h3 id="十字链表">十字链表</h3>
+
+<p>对于 3D 游戏，我们一般会给 X 轴和 Z 轴坐标分别构建有序的链表，每个实体在链表上都有一个节点，存放的是该坐标轴值，按照值递增的顺序来存放。但如果只是存放实体本身的坐标点，这两个链表做查询的效率依然很低。</p>
+
+<p>真正关键的是，我们在链表上还会给拥有 AOI 的每个玩家增加左右两个哨兵节点。两个哨兵的坐标值跟玩家本身坐标正好相差了 AOI 半径，譬如玩家 <code class="language-plaintext highlighter-rouge">P</code> 坐标为 <code class="language-plaintext highlighter-rouge">(a, b, c)</code>，AOI 半径为 <code class="language-plaintext highlighter-rouge">r</code> ，那么在 X 轴上会有两个哨兵 <code class="language-plaintext highlighter-rouge">left_x, right_x</code>，坐标值分别为 <code class="language-plaintext highlighter-rouge">a - r</code> 和 <code class="language-plaintext highlighter-rouge">a + r</code>。由于有哨兵的存在，我们通过跟踪哨兵跟其他实体节点的移动来更新 AOI。继续前面的例子，一个实体 <code class="language-plaintext highlighter-rouge">E</code> 移动导致在 X 轴上的节点从 <code class="language-plaintext highlighter-rouge">left_x</code> 的右边想左跨过 <code class="language-plaintext highlighter-rouge">left_x</code> 来到 <code class="language-plaintext highlighter-rouge">left_x</code> 的左边，那么说明 <code class="language-plaintext highlighter-rouge">E</code> 肯定是离开了 <code class="language-plaintext highlighter-rouge">P</code> 的 AOI；同理如果向右跨过了 <code class="language-plaintext highlighter-rouge">right_x</code> 也是离开了 AOI。相反，如果是向右跨过 <code class="language-plaintext highlighter-rouge">left_x</code>，或者向左跨过 <code class="language-plaintext highlighter-rouge">right_x</code>，说明有可能会进入到 <code class="language-plaintext highlighter-rouge">P</code> 的 AOI 中。</p>
+
+<p>可以看到，十字链表算法要比九宫格复杂得多，我们需要维护两条有序的链表，并且在每个实体坐标更新的时候，同步移动链表上的节点，并且在移动跨过其他节点时更新 AOI。</p>
+
+<h3 id="九宫格的实现">九宫格的实现</h3>
+
+<p>因为涉及到实测的性能，所以我们先来稍微深入一点九宫格算法的实现细节：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">Sensor</span> <span class="p">{</span>
+  <span class="c1">// ...</span>
+  <span class="n">Nuid</span> <span class="n">sensor_id</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">radius</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">radius_square</span><span class="p">;</span>
+  <span class="n">PlayerPtrList</span> <span class="n">aoi_players</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+<span class="p">};</span>
+
+<span class="k">struct</span> <span class="nc">PlayerAoi</span> <span class="p">{</span>
+  <span class="c1">// ...    </span>
+  <span class="n">Nuid</span> <span class="n">nuid</span><span class="p">;</span>
+  <span class="n">SquareId</span> <span class="n">square_id</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">square_index</span><span class="p">;</span>
+  <span class="n">Pos</span> <span class="n">pos</span><span class="p">;</span>
+  <span class="n">Pos</span> <span class="n">last_pos</span><span class="p">;</span>
+  <span class="n">Uint32</span> <span class="n">flags</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Sensor</span><span class="o">&gt;</span> <span class="n">sensors</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">PlayerAoi</code> 存放玩家的数据，其中有一个 <code class="language-plaintext highlighter-rouge">sensors</code> 数组，<code class="language-plaintext highlighter-rouge">sensors</code> 就是用来计算一定范围内的实体，每次 <code class="language-plaintext highlighter-rouge">Tick</code> 之后把计算出来的实体计划放在 <code class="language-plaintext highlighter-rouge">aoi_players</code>。<code class="language-plaintext highlighter-rouge">aoi_players</code> 是存放了两个数组，用于上一次 <code class="language-plaintext highlighter-rouge">Tick</code> 结果做比较，求出进入和离开玩家。 <code class="language-plaintext highlighter-rouge">Tick</code> 的大致流程是这样：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">AoiUpdateInfos</span> <span class="n">SquareAoi</span><span class="o">::</span><span class="n">Tick</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">AoiUpdateInfos</span> <span class="n">update_infos</span><span class="p">;</span>
+  <span class="n">PlayerPtrList</span> <span class="n">remove_list</span><span class="p">;</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">elem</span> <span class="o">:</span> <span class="n">player_map_</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span><span class="o">&amp;</span> <span class="n">player</span> <span class="o">=</span> <span class="o">*</span><span class="n">elem</span><span class="p">.</span><span class="n">second</span><span class="p">;</span>
+    <span class="c1">// ...</span>
+    <span class="c1">// 对有 sensors 的玩家计算 Aoi</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">player</span><span class="p">.</span><span class="n">sensors</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+      <span class="k">auto</span> <span class="n">update_info</span> <span class="o">=</span> <span class="n">_UpdatePlayerAoi</span><span class="p">(</span><span class="n">cur_aoi_map_idx_</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">player</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">update_info</span><span class="p">.</span><span class="n">sensor_update_list</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">update_infos</span><span class="p">.</span><span class="n">emplace</span><span class="p">(</span><span class="n">update_info</span><span class="p">.</span><span class="n">nuid</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">update_info</span><span class="p">));</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">// ...</span>
+  <span class="p">}</span>
+
+  <span class="c1">// ...</span>
+  <span class="c1">// 记录玩家上次的位置</span>
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">elem</span> <span class="o">:</span> <span class="n">player_map_</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span><span class="o">&amp;</span> <span class="n">player</span> <span class="o">=</span> <span class="o">*</span><span class="n">elem</span><span class="p">.</span><span class="n">second</span><span class="p">;</span>
+    <span class="n">player</span><span class="p">.</span><span class="n">last_pos</span> <span class="o">=</span> <span class="n">player</span><span class="p">.</span><span class="n">pos</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">cur_aoi_map_idx_</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">cur_aoi_map_idx_</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">update_infos</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">Tick</code> 做的事情很简单，遍历有 <code class="language-plaintext highlighter-rouge">sensors</code> 的玩家，逐个计算 <code class="language-plaintext highlighter-rouge">sensor</code> 范围内的实体，即为 AOI。<code class="language-plaintext highlighter-rouge">last_pos</code> 是用来参与判断实体是否有进入或者离开 AOI，<code class="language-plaintext highlighter-rouge">_UpdatePlayerAoi</code> 的代码如下：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">AoiUpdateInfo</span> <span class="n">SquareAoi</span><span class="o">::</span><span class="n">_UpdatePlayerAoi</span><span class="p">(</span><span class="n">Uint32</span> <span class="n">cur_aoi_map_idx</span><span class="p">,</span> <span class="n">PlayerAoi</span><span class="o">*</span> <span class="n">pptr</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">AoiUpdateInfo</span> <span class="n">aoi_update_info</span><span class="p">;</span>
+  <span class="n">aoi_update_info</span><span class="p">.</span><span class="n">nuid</span> <span class="o">=</span> <span class="n">pptr</span><span class="o">-&gt;</span><span class="n">nuid</span><span class="p">;</span>
+  <span class="n">Uint32</span> <span class="n">new_aoi_map_idx</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">cur_aoi_map_idx</span><span class="p">;</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span> <span class="n">sensor</span> <span class="o">:</span> <span class="n">pptr</span><span class="o">-&gt;</span><span class="n">sensors</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span><span class="o">&amp;</span> <span class="n">old_aoi</span> <span class="o">=</span> <span class="n">sensor</span><span class="p">.</span><span class="n">aoi_players</span><span class="p">[</span><span class="n">cur_aoi_map_idx</span><span class="p">];</span>
+    <span class="k">auto</span><span class="o">&amp;</span> <span class="n">new_aoi</span> <span class="o">=</span> <span class="n">sensor</span><span class="p">.</span><span class="n">aoi_players</span><span class="p">[</span><span class="n">new_aoi_map_idx</span><span class="p">];</span>
+    <span class="p">(</span><span class="k">this</span><span class="o">-&gt;*</span><span class="n">calc_aoi_players_func_</span><span class="p">)(</span><span class="o">*</span><span class="n">pptr</span><span class="p">,</span> <span class="n">sensor</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">new_aoi</span><span class="p">);</span>
+
+    <span class="n">SensorUpdateInfo</span> <span class="n">update_info</span><span class="p">;</span>
+
+    <span class="k">auto</span><span class="o">&amp;</span> <span class="n">enters</span> <span class="o">=</span> <span class="n">update_info</span><span class="p">.</span><span class="n">enters</span><span class="p">;</span>
+    <span class="k">auto</span><span class="o">&amp;</span> <span class="n">leaves</span> <span class="o">=</span> <span class="n">update_info</span><span class="p">.</span><span class="n">leaves</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">radius_square</span> <span class="o">=</span> <span class="n">sensor</span><span class="p">.</span><span class="n">radius_square</span><span class="p">;</span>
+
+    <span class="n">_CheckLeave</span><span class="p">(</span><span class="n">pptr</span><span class="p">,</span> <span class="n">radius_square</span><span class="p">,</span> <span class="n">old_aoi</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">leaves</span><span class="p">);</span>
+    <span class="n">_CheckEnter</span><span class="p">(</span><span class="n">pptr</span><span class="p">,</span> <span class="n">radius_square</span><span class="p">,</span> <span class="n">new_aoi</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">enters</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">enters</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">leaves</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+      <span class="k">continue</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">update_info</span><span class="p">.</span><span class="n">sensor_id</span> <span class="o">=</span> <span class="n">sensor</span><span class="p">.</span><span class="n">sensor_id</span><span class="p">;</span>
+    <span class="n">aoi_update_info</span><span class="p">.</span><span class="n">sensor_update_list</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">update_info</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="n">aoi_update_info</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">old_aoi</code> 是上一个 <code class="language-plaintext highlighter-rouge">Tick</code> 计算出来的 AOI，<code class="language-plaintext highlighter-rouge">new_aoi</code> 是本次 <code class="language-plaintext highlighter-rouge">Tick</code> 需要计算的 AOI。<code class="language-plaintext highlighter-rouge">new_aoi</code> 通过遍历 AOI 范围内的所有格子的实体，选出跟玩家距离小于 AOI 半径来获得。之后用 <code class="language-plaintext highlighter-rouge">_CheckLeave</code> 和 <code class="language-plaintext highlighter-rouge">_CheckEnter</code> 两个函数，计算本次 <code class="language-plaintext highlighter-rouge">Tick</code> 离开和进入 AOI 的实体，譬如如果 <code class="language-plaintext highlighter-rouge">new_aoi</code> 中的实体 <code class="language-plaintext highlighter-rouge">last_pos</code> 不在 AOI范围内，说明该实体是在本次 <code class="language-plaintext highlighter-rouge">Tick</code> 进入到了 AOI 范围。具体的代码可以看源文件，这里不再赘述。</p>
+
+<h3 id="十字链表的实现">十字链表的实现</h3>
+
+<p>相比起九宫格，十字链表实现起来更复杂，先来看基本的数据结构：</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="nc">CoordNode</span> <span class="p">{</span>
+  <span class="c1">// ...</span>
+  <span class="n">Uint8</span> <span class="n">type</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">value</span><span class="p">;</span>
+  <span class="n">CoordNode</span> <span class="o">*</span><span class="n">prev</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">CoordNode</span> <span class="o">*</span><span class="n">next</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+  <span class="n">PlayerAoi</span> <span class="o">*</span><span class="n">pplayer</span><span class="p">;</span>
+  <span class="n">Sensor</span> <span class="o">*</span><span class="n">psensor</span><span class="p">;</span>
+
+<span class="p">};</span>
+
+<span class="n">KHASH_MAP_INIT_INT64</span><span class="p">(</span><span class="n">SensorHashMap</span><span class="p">,</span> <span class="n">PlayerAoi</span><span class="o">*</span><span class="p">);</span>
+
+<span class="k">struct</span> <span class="nc">Sensor</span> <span class="p">{</span>
+  <span class="c1">// ...</span>
+  <span class="n">Nuid</span> <span class="n">sensor_id</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">radius</span><span class="p">;</span>
+  <span class="kt">float</span> <span class="n">radius_square</span><span class="p">;</span>
+  <span class="n">PlayerAoi</span> <span class="o">*</span><span class="n">pplayer</span><span class="p">;</span>
+  <span class="n">CoordNode</span> <span class="n">left_x</span><span class="p">;</span>
+  <span class="n">CoordNode</span> <span class="n">right_x</span><span class="p">;</span>
+  <span class="n">CoordNode</span> <span class="n">left_z</span><span class="p">;</span>
+  <span class="n">CoordNode</span> <span class="n">right_z</span><span class="p">;</span>
+  <span class="n">PlayerPtrList</span> <span class="n">aoi_players</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">khash_t</span><span class="p">(</span><span class="n">SensorHashMap</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">aoi_player_candidates</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">struct</span> <span class="nc">PlayerAoi</span> <span class="p">{</span>
+  <span class="c1">// ...</span>
+  <span class="n">Nuid</span> <span class="n">nuid</span><span class="p">;</span>
+  <span class="n">Pos</span> <span class="n">pos</span><span class="p">;</span>
+  <span class="n">Pos</span> <span class="n">last_pos</span><span class="p">;</span>
+  <span class="n">Uint32</span> <span class="n">flags</span><span class="p">;</span>
+  <span class="n">CoordNode</span> <span class="n">node_x</span><span class="p">;</span>
+  <span class="n">CoordNode</span> <span class="n">node_z</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Sensor</span><span class="o">&gt;</span> <span class="n">sensors</span><span class="p">;</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">boost</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">Nuid</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Nuid</span><span class="o">&gt;&gt;&gt;</span> <span class="n">detected_by</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">Sensor</code> 和 <code class="language-plaintext highlighter-rouge">PlayerAoi</code> 跟九宫格有部分相似，不过多了链表相关的节点结构 <code class="language-plaintext highlighter-rouge">CoordNode</code>。<code class="language-plaintext highlighter-rouge">CoordNode</code> 就是链表上的一个节点，记录了本身节点的类型和数值，类型有三种：玩家节点，<code class="language-plaintext highlighter-rouge">Sensor</code> 左节点，<code class="language-plaintext highlighter-rouge">Sensor</code> 右节点。</p>
+
+<p>十字链表的大部分工作都是在维持链表的有序：</p>
+
+<ul>
+  <li>玩家加入时需要把玩家节点移动到有序的位置上，并且在移动玩家节点的同时，处理进入或者离开其他玩家 AOI 事件。</li>
+  <li>玩家移动到正确的位置后，<code class="language-plaintext highlighter-rouge">Sensor</code> 左右节点从玩家前后位置出发，移动到正确的位置，并处理跨过其他玩家节点时触发的进入和离开事件。</li>
+  <li>玩家移动时，更新玩家的坐标，并移动玩家节点和 <code class="language-plaintext highlighter-rouge">Sensor</code> 左右节点，处理 AOI 进入离开。</li>
+</ul>
+
+<p>移动节点的代码如下，每跨过一个节点，都会调用一次 <code class="language-plaintext highlighter-rouge">MoveCross</code> 函数，由 <code class="language-plaintext highlighter-rouge">MoveCross</code> 函数根据移动方向，移动节点和跨过节点的类型来决定是进入还是离开 AOI。</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">ListUpdateNode</span><span class="p">(</span><span class="n">CoordNode</span> <span class="o">**</span><span class="n">list</span><span class="p">,</span> <span class="n">CoordNode</span> <span class="o">*</span><span class="n">pnode</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">float</span> <span class="n">value</span> <span class="o">=</span> <span class="n">pnode</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">pnode</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">&amp;&amp;</span> <span class="n">pnode</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// move right</span>
+    <span class="k">auto</span> <span class="n">cur_node</span> <span class="o">=</span> <span class="n">pnode</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">MoveCross</span><span class="p">(</span><span class="n">MOVE_DIRECTION_RIGHT</span><span class="p">,</span> <span class="n">pnode</span><span class="p">,</span> <span class="n">cur_node</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cur_node</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">||</span> <span class="n">cur_node</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">value</span> <span class="o">&gt;=</span> <span class="n">value</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+      <span class="n">cur_node</span> <span class="o">=</span> <span class="n">cur_node</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">ListRemove</span><span class="p">(</span><span class="n">list</span><span class="p">,</span> <span class="n">pnode</span><span class="p">);</span>
+    <span class="n">ListInsertAfter</span><span class="p">(</span><span class="n">list</span><span class="p">,</span> <span class="n">cur_node</span><span class="p">,</span> <span class="n">pnode</span><span class="p">);</span>
+
+  <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">pnode</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">&amp;&amp;</span> <span class="n">pnode</span><span class="o">-&gt;</span><span class="n">prev</span><span class="o">-&gt;</span><span class="n">value</span> <span class="o">&gt;</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// move left</span>
+    <span class="k">auto</span> <span class="n">cur_node</span> <span class="o">=</span> <span class="n">pnode</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">MoveCross</span><span class="p">(</span><span class="n">MOVE_DIRECTION_LEFT</span><span class="p">,</span> <span class="n">pnode</span><span class="p">,</span> <span class="n">cur_node</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cur_node</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">||</span> <span class="n">cur_node</span><span class="o">-&gt;</span><span class="n">prev</span><span class="o">-&gt;</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="n">value</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+      <span class="n">cur_node</span> <span class="o">=</span> <span class="n">cur_node</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">ListRemove</span><span class="p">(</span><span class="n">list</span><span class="p">,</span> <span class="n">pnode</span><span class="p">);</span>
+    <span class="n">ListInsertBefore</span><span class="p">(</span><span class="n">list</span><span class="p">,</span> <span class="n">cur_node</span><span class="p">,</span> <span class="n">pnode</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>链表的移动很慢，是 <code class="language-plaintext highlighter-rouge">O(n)</code> 的复杂度，特别是在玩家新加入场景时，玩家需要从无穷远的地方，逐步移动到正确的位置上，为此需要大量遍历的节点，消耗很大。为了优化性能，我们可以在场景中固定位置放置灯塔，这种灯塔处理上跟玩家大致相同，只是比玩家多记录了一份 <code class="language-plaintext highlighter-rouge">detected_by</code> 数据，<code class="language-plaintext highlighter-rouge">detected_by</code> 是用来记录该哨兵实体处在哪些 <code class="language-plaintext highlighter-rouge">Sensor</code> 范围内。玩家首次进入场景时，不再从最远处开始移动，而是找到一个最近的灯塔，把节点插入到灯塔旁边，并通过灯塔身上的 <code class="language-plaintext highlighter-rouge">detected_by</code> 数据，快速进入到跟灯塔一致的其他玩家的 AOI 范围内，然后开始移动到正确的位置上，当然移动的时候也要处理进入和离开。同理，对于 <code class="language-plaintext highlighter-rouge">Sensor</code>，也可以通过先继承灯塔的数据，然后从灯塔的位置上移动到正确位置上。通过这两种优化能够提升一倍以上的插入玩家性能。</p>
+
+<p><code class="language-plaintext highlighter-rouge">Sensor</code> 身上还有一个名叫 <code class="language-plaintext highlighter-rouge">aoi_player_candidates</code> 的 <code class="language-plaintext highlighter-rouge">HashMap</code>（这里为了性能，使用了<a href="https://github.com/attractivechaos/klib/blob/master/khash.h">khash</a>）。节点移动触发的 AOI 事件，其实只能检测到 X-Z 坐标轴上边长为 <code class="language-plaintext highlighter-rouge">2r</code> 的正方形区域，不是我们严格意义上的圆形区域的 AOI，这个正方形的区域内的实体都被记录在 <code class="language-plaintext highlighter-rouge">aoi_player_candidates</code> 上，并在 <code class="language-plaintext highlighter-rouge">Tick</code> 中遍历计算圆形区域内的 AOI 范围，所以称为 <code class="language-plaintext highlighter-rouge">candidates</code>。</p>
+
+<p>所有十字链表的操作都是为了一直维护正方形区域内的实体 <code class="language-plaintext highlighter-rouge">candidates</code>，十字链表中 <code class="language-plaintext highlighter-rouge">Tick</code> 做的操作跟九宫格几乎一致，只是遍历计算 AOI 的 <code class="language-plaintext highlighter-rouge">candidates</code> 不相同。九宫格的 <code class="language-plaintext highlighter-rouge">candidates</code> 是 AOI 圆形区域所覆盖到的格子的实体，而十字链表则是由 <code class="language-plaintext highlighter-rouge">Sensor</code> 左右节点所界定的边长为 <code class="language-plaintext highlighter-rouge">2r</code> 的正方形区域中的实体。定性的来说，十字链表的 <code class="language-plaintext highlighter-rouge">candidates</code> 一般都要比九宫格少，所以在 <code class="language-plaintext highlighter-rouge">Tick</code> 中的遍历次数少，性能更优，只是十字链表还有大量额外的性能消耗在了维护链表上，这两者整体的性能到底孰优孰劣，我们接下来实测看看。</p>
+
+<h3 id="性能实测">性能实测</h3>
+
+<p>我这里分别测了玩家加入场景（<code class="language-plaintext highlighter-rouge">Add Player</code>），计算 AOI 进出事件（<code class="language-plaintext highlighter-rouge">Tick</code>），玩家更新坐标位置（<code class="language-plaintext highlighter-rouge">Update Pos</code>）三种情况的时间消耗。</p>
+
+<p>玩家初始位置在地图范围内随机生成，然后把玩家加入场景。<code class="language-plaintext highlighter-rouge">player_num</code> 是玩家数量，<code class="language-plaintext highlighter-rouge">map_size</code> 则是地图 X-Z 坐标轴范围，玩家的位置在此范围内均匀随机生成，每个玩家都有一个半径 <code class="language-plaintext highlighter-rouge">100</code> 的 <code class="language-plaintext highlighter-rouge">Sensor</code> 作为 AOI，计算时间用的是 <code class="language-plaintext highlighter-rouge">boost::timer::cpu_timer</code>。<code class="language-plaintext highlighter-rouge">player_num</code> 分别选了 <code class="language-plaintext highlighter-rouge">100, 1000, 10000</code> 三种情况，而 <code class="language-plaintext highlighter-rouge">map_size</code> 则选了 <code class="language-plaintext highlighter-rouge">[-50, 50], [-100, 100], [-1000, 1000], [-10000, 10000]</code> 四种情况。</p>
+
+<p>更新玩家位置会让玩家固定随机方向，以 <code class="language-plaintext highlighter-rouge">6m/s</code> 的速度移动。</p>
+
+<p>本次测试环境为：</p>
+
+<ul>
+  <li>CPU: Intel(R) Core(TM) i5-4590 CPU @ 3.30GHz</li>
+  <li>系统: Debian GNU/Linux 10 (buster)</li>
+  <li>gcc 版本: gcc version 8.3.0 (Debian 8.3.0-6)</li>
+  <li>boost 版本: boost_1_75_0</li>
+</ul>
+
+<h4 id="九宫格实测">九宫格实测</h4>
+
+<p>九宫格的测试结果如下：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">50.000000</span><span class="p">,</span> <span class="mf">50.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000081</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000452</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000230</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">100.000000</span><span class="p">,</span> <span class="mf">100.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000070</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000338</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000185</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1000.000000</span><span class="p">,</span> <span class="mf">1000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000084</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000103</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000187</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">10000.000000</span><span class="p">,</span> <span class="mf">10000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000084</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000080</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000185</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">50.000000</span><span class="p">,</span> <span class="mf">50.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000673</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.035298</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.030000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.030000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">85.0</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.001841</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">100.000000</span><span class="p">,</span> <span class="mf">100.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000664</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.025806</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.030000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.030000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">116.3</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.001842</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1000.000000</span><span class="p">,</span> <span class="mf">1000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000721</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.001793</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.001849</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">540.8</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">10000.000000</span><span class="p">,</span> <span class="mf">10000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000885</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000804</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.001855</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">50.000000</span><span class="p">,</span> <span class="mf">50.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.006454</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">154.9</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">3.822028</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">3.800000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">3.820000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">99.9</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.018402</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">108.7</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">100.000000</span><span class="p">,</span> <span class="mf">100.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.006439</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">2.805551</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">2.760000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.040000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">2.800000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">99.8</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.018489</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">54.1</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1000.000000</span><span class="p">,</span> <span class="mf">1000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.006698</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">149.3</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.093759</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.100000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.100000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">106.7</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.018350</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">54.5</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">10000.000000</span><span class="p">,</span> <span class="mf">10000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.009046</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">110.6</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.012091</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">82.7</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.019033</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">105.1</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+</code></pre></div></div>
+
+<p>九宫格在玩家数量 <code class="language-plaintext highlighter-rouge">100</code> 时，三种操作耗时都很小，极限情况 <code class="language-plaintext highlighter-rouge">map_size = [-50, 50]</code>，所有玩家互相都处于 AOI 范围内，<code class="language-plaintext highlighter-rouge">Tick</code> 耗时大概 <code class="language-plaintext highlighter-rouge">0.4ms</code>。玩家加入场景和更新坐标都是线性复杂度 <code class="language-plaintext highlighter-rouge">O(player_num)</code>，性能表现都不错。在 <code class="language-plaintext highlighter-rouge">player_num = 10000, map_size = [-50, 50]</code> 玩家人数达到 1 万的时候，<code class="language-plaintext highlighter-rouge">Add Player</code> 和 <code class="language-plaintext highlighter-rouge">Update Pos</code> 由于都是线性，几毫秒内就能完成，但 <code class="language-plaintext highlighter-rouge">Tick</code> 耗时就去到 <code class="language-plaintext highlighter-rouge">3.8s</code>，需要消耗大量 CPU，属于不可用了。人数 1 万，地图大小 <code class="language-plaintext highlighter-rouge">[-1000, 1000]</code>，情况下，<code class="language-plaintext highlighter-rouge">Tick</code> 时间消耗大概 <code class="language-plaintext highlighter-rouge">94ms</code>，如果能够降低 <code class="language-plaintext highlighter-rouge">Tick</code> 频率的话，譬如一秒两次，还是勉强属于可用的范围内。</p>
+
+<h4 id="十字链表实测">十字链表实测</h4>
+
+<p>十字链表的测试结果如下：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">50.000000</span><span class="p">,</span> <span class="mf">50.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.002057</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000330</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000232</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">100.000000</span><span class="p">,</span> <span class="mf">100.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.001201</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000222</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000272</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1000.000000</span><span class="p">,</span> <span class="mf">1000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000288</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000048</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000200</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">10000.000000</span><span class="p">,</span> <span class="mf">10000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000194</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000041</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000192</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">50.000000</span><span class="p">,</span> <span class="mf">50.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.130766</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.130000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.130000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">99.4</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.028091</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">71.2</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.005369</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">186.2</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">100.000000</span><span class="p">,</span> <span class="mf">100.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.103015</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.100000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.100000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">97.1</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.019545</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">102.3</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.009208</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">108.6</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1000.000000</span><span class="p">,</span> <span class="mf">1000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.010150</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">98.5</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000845</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.003023</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">10000.000000</span><span class="p">,</span> <span class="mf">10000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.004950</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">202.0</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.000427</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.002234</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="n">a</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">50.000000</span><span class="p">,</span> <span class="mf">50.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">21.606402</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">21.040000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.570000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">21.610000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">100.0</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">3.696885</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">3.680000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.030000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">3.710000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">100.4</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.434396</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.430000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.430000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">99.0</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">100.000000</span><span class="p">,</span> <span class="mf">100.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">18.499235</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">18.470000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.020000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">18.490000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">100.0</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">2.292608</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">2.290000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">2.290000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">99.9</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">1.522617</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">1.530000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">1.530000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">100.5</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1000.000000</span><span class="p">,</span> <span class="mf">1000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">1.642519</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">1.640000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">1.640000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">99.8</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.042767</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.050000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.050000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">116.9</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.202949</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.200000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.200000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">98.5</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+
+<span class="o">===</span><span class="n">Begin</span> <span class="n">Milestore</span><span class="p">:</span> <span class="n">player_num</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">map_size</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">10000.000000</span><span class="p">,</span> <span class="mf">10000.000000</span><span class="p">)</span>
+<span class="n">Add</span> <span class="nc">Player </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.571257</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.570000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.570000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">99.8</span><span class="o">%</span><span class="p">)</span>
+<span class="nc">Tick </span><span class="p">(</span><span class="mi">1</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.006325</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.010000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">158.1</span><span class="o">%</span><span class="p">)</span>
+<span class="n">Update</span> <span class="nc">Pos </span><span class="p">(</span><span class="mi">10</span> <span class="n">times</span><span class="p">)</span> <span class="mf">0.042568</span><span class="n">s</span> <span class="n">wall</span><span class="p">,</span> <span class="mf">0.040000</span><span class="n">s</span> <span class="n">user</span> <span class="o">+</span> <span class="mf">0.000000</span><span class="n">s</span> <span class="n">system</span> <span class="o">=</span> <span class="mf">0.040000</span><span class="n">s</span> <span class="nc">CPU </span><span class="p">(</span><span class="mf">94.0</span><span class="o">%</span><span class="p">)</span>
+<span class="o">===</span><span class="n">End</span> <span class="n">Milestore</span>
+</code></pre></div></div>
+
+<p>如我们分析一致，十字链表在 <code class="language-plaintext highlighter-rouge">Add Player</code> 和 <code class="language-plaintext highlighter-rouge">Update Pos</code> 上耗时更长，特别是 <code class="language-plaintext highlighter-rouge">Add Player</code>，相比九宫格性能差了几百甚至上万倍（<code class="language-plaintext highlighter-rouge">100, [-50, 50]</code> 十字链耗时 <code class="language-plaintext highlighter-rouge">2ms</code>，而九宫格只有 <code class="language-plaintext highlighter-rouge">0.08ms</code>；<code class="language-plaintext highlighter-rouge">10000, [-50, 50]</code> 十字链 <code class="language-plaintext highlighter-rouge">21.6s</code>，九宫格只有 <code class="language-plaintext highlighter-rouge">6ms</code>。<code class="language-plaintext highlighter-rouge">Update Pos</code> 的耗时也最多会有百倍的差距，<code class="language-plaintext highlighter-rouge">10000, [-100, 100]</code> 十字链更新玩家位置耗时 <code class="language-plaintext highlighter-rouge">1.5s</code>，而九宫格是 <code class="language-plaintext highlighter-rouge">18ms</code>。可以看出，十字链在 <code class="language-plaintext highlighter-rouge">Add Player</code> 和 <code class="language-plaintext highlighter-rouge">Update Pos</code> 耗时的上下限范围比九宫格要大，受人数和地图大小影响更大，在玩家密集的区域，这两个操作的性能会急速下降，直至不可用。</p>
+
+<p>反观十字链的 <code class="language-plaintext highlighter-rouge">Tick</code> 操作，整体性能确实是比九宫格好，最好的情况耗时大概只有九宫格的一半左右（ <code class="language-plaintext highlighter-rouge">1000, [-1000, 1000]</code> 下十字链耗时 <code class="language-plaintext highlighter-rouge">0.8ms</code>，九宫格 <code class="language-plaintext highlighter-rouge">1.8ms</code>），但是最差的情况十字链会退化到跟九宫格的性能接近（<code class="language-plaintext highlighter-rouge">10000, [-10000, 10000]</code> 下十字链耗时 <code class="language-plaintext highlighter-rouge">3.7s</code>，九宫格 <code class="language-plaintext highlighter-rouge">3.8s</code>。这是因为由于场景小，玩家互相都在彼此的 AOI 范围内，十字链 <code class="language-plaintext highlighter-rouge">Tick</code> 遍历的 <code class="language-plaintext highlighter-rouge">candidates</code> 数量, 其实已经跟九宫格很接近了。</p>
+
+<p>十字链使用起来要达到比九宫格性能更优，需要一些更强的假设，譬如 <code class="language-plaintext highlighter-rouge">player_num = 1000, map_size = [-1000, 1000]</code> 情况下，<code class="language-plaintext highlighter-rouge">Tick</code> 耗时十字链为 <code class="language-plaintext highlighter-rouge">0.8ms</code> 九宫格 <code class="language-plaintext highlighter-rouge">1.8ms</code>，<code class="language-plaintext highlighter-rouge">Update Pos</code> 十字链为 <code class="language-plaintext highlighter-rouge">0.3ms</code> 九宫格 <code class="language-plaintext highlighter-rouge">0.18ms</code>（注意测试 <code class="language-plaintext highlighter-rouge">Update Pos</code> 时间为执行了 10 次的时间总和）。<code class="language-plaintext highlighter-rouge">Tick + Update Pos</code> 总时间下，十字链如果要比九宫格更少，那 <code class="language-plaintext highlighter-rouge">Update Pos</code> 的次数不能超过 <code class="language-plaintext highlighter-rouge">Tick</code> 的 <code class="language-plaintext highlighter-rouge">8</code> 倍，或者说两个 <code class="language-plaintext highlighter-rouge">Tick</code> 之间，<code class="language-plaintext highlighter-rouge">Update Pos</code> 的次数需要小于 <code class="language-plaintext highlighter-rouge">8</code> 次。另外因为十字链 <code class="language-plaintext highlighter-rouge">Add Player</code> 耗时巨大，不适用于玩家短时间频繁出入场景或者在场景内大范围传送的情况，另外如果短时间内有大量玩家进入场景，也很容易导致性能下降，大量占用 CPU。</p>
+
+<p>对于十字链表，在一个前提之下还能做一个优化：干掉 <code class="language-plaintext highlighter-rouge">Tick</code>，前提是游戏能接受正方形的 AOI，并且需要实测正方形 AOI 带来的其他诸如网络等消耗是能接受的。其实前提是比较苛刻的，因为在游戏中 AOI 计费能占用的 CPU 通常占比是不大的，但把圆形 AOI 改成方形 AOI 导致 AOI 范围面积增大，范围内的玩家数量也增多，均匀分布下玩家数量可能会增多到原来的 <code class="language-plaintext highlighter-rouge">1.27</code> 倍。但是，一旦能满足前提，十字链表可以做到不需要 <code class="language-plaintext highlighter-rouge">Tick</code> 来定期更新 AOI 事件，因为实现上十字链表的 <code class="language-plaintext highlighter-rouge">candidates</code> 就维护了一份方形下 AOI，原来只是为了计算圆形 AOI，而不得不在 <code class="language-plaintext highlighter-rouge">Tick</code> 中再遍历计算距离。在这种情况下，十字链是有可能能够达到很好的性能，因为十字链表 <code class="language-plaintext highlighter-rouge">Update Pos</code> 的性能可以跟 <code class="language-plaintext highlighter-rouge">Tick</code> 相差几倍到几十倍。</p>
+
+<p>最后给出两者的对比柱状图：</p>
+
+<p><img src="/assets/post_assets/2021-11-18-aoi-tesing/add_player.png" alt="add_player.png" title="add_player.png" /></p>
+
+<p><img src="/assets/post_assets/2021-11-18-aoi-tesing/tick.png" alt="tick.png" title="tick.png" /></p>
+
+<p><img src="/assets/post_assets/2021-11-18-aoi-tesing/update_pos.png" alt="update_pos.png" title="update_pos.png" /></p>
+
+<h3 id="总结">总结</h3>
+
+<p>本文我们介绍了两种 AOI 算法（九宫格和十字链）的原理和基本实现，并通过实测的数据分析了这两种算法的性能优劣，希望能够给读者带来一些帮助或者启发。</p>
+
+<p>总的来说，九宫格法实现简单，性能均衡不容易拉胯，非常适合 AOI 不是性能瓶颈的游戏来使用，九宫格法的性能波动范围是在可预期的范围内，性能下限比较高，也不容易导致瓶颈，但另一方面可优化空间也不大，时间复杂度比较固定。反观十字链法，实现要更复杂，性能下限比九宫格法低，但是如果能够满足一些假设和前提，十字链可优化空间更高，换句话说是上限是可以更高。这两种方法各有优劣，游戏业界内也有不同的引擎分别选择了两者之一，各取所需，见仁见智。</p>
+
+<p>本人能力有限，文中内容仅代表本人想法，如有不足不妥之处欢迎留言讨论。</p>
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> 游戏 AOI 算法解析和性能实测 </a>。
+                </p>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2021/03/31/cpp-preprocess" data-toggle="tooltip" data-placement="top" title="C/C++ 宏编程解析">
+                            前一篇<br>
+                            <span>C/C++ 宏编程解析</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2023/01/12/python-talk-builtin" data-toggle="tooltip" data-placement="top" title="Python 杂谈 1 - 探究 __builtins__">
+                            后一篇<br>
+                            <span>Python 杂谈 1 - 探究 __builtins__</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br/><br/>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2021/11/18/aoi-tesing>" class="leancloud_visitors" data-flag-title="游戏 AOI 算法解析和性能实测">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="og:title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+</body>
+
+</html>

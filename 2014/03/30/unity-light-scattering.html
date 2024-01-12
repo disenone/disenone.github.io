@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>Unity实现体积光照散射 (Volumetric Light Scattering，云隙光) - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/2014/03/30/unity-light-scattering">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="English" href="/en/2014/03/30/unity-light-scattering">
+                            
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/Tags/#dev" title="dev">dev</a>
+                        
+                    </div>
+                    <h1>Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)</h1>
+                    
+                    <span class="meta">Posted by Disenone on March 30, 2014</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> Unity实现体积光照散射 (Volumetric Light Scattering，云隙光) </a>。
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)" />
+
+<h2 id="原理">原理</h2>
+
+<p>Volumetric Light Scattering 的原理可以参考《GPU Gems 3》<a href="http://http.developer.nvidia.com/GPUGems3/gpugems3_ch13.html">第13章</a>，书上有效果图：</p>
+
+<p><img src="/assets/post_assets/2014-3-30-unity-light-scattering/goodeffect.png" alt="goodeffect.png" title="goodeffect.png" /></p>
+
+<p>好看吧，那好，我们的目标就是实现这种效果。</p>
+
+<p>书上介绍了原理，一条关键的公式是：</p>
+
+<p>\[ L(s, \theta, \phi) = exposure \times \sum_{i=0}^n decay^i \times weight \times \frac{L( s_i, \theta_i )}{n} \]</p>
+
+<p>我的理解是，对于图像上的每个像素，光线都有可能照射到，那么对该像素到光源(在投影到图像上的位置)的连线进行采样(对应公式上\(i\))，采样出的结果进行加权平均(对应公式上\(\sum\))并作为该像素的新的颜色值。另外还有关键的后置像素着色器，但是如果只是用那个着色器来对相机渲染的结果进行处理，会产生明显的人工痕迹，有许多的条纹：</p>
+
+<p><img src="/assets/post_assets/2014-3-30-unity-light-scattering/badeffect.png" alt="badeffect.png" title="badeffect.png" /></p>
+
+<p>那么书上的效果是怎么做出来的？其实书上已经给出了答案，可以用一组图来阐述：</p>
+
+<p><img src="/assets/post_assets/2014-3-30-unity-light-scattering/steps.png" alt="steps.png" title="steps.png" /></p>
+
+<p>图a 就是粗糙的效果，细心地可以看到有许多条纹，并且没有遮挡不够真实，b、c、 d就是为了获得好的效果需要进行的步骤：</p>
+
+<p>b. 把灯光辐射效果渲染到图像上，并加上物体的遮挡</p>
+
+<p>c. 对b执行 Volumetric Light Scattering 像素着色器，得到遮挡后的效果</p>
+
+<p>d. 添加上把真实场景的颜色</p>
+
+<p>那么下面我们就来一步一步地实现。</p>
+
+<h2 id="画遮挡物体">画遮挡物体</h2>
+
+<p>在实际的操作中，我先用<code class="language-plaintext highlighter-rouge">RenderWithShader</code>来把会发生遮挡的物体画成黑色，其他地方为白色，因为这需要对每个面片进行渲染，因此对于复杂的场景，会带来一定的性能消耗。场景中的物体有不透明和透明的，我们希望不透明的物体产生完全的光线遮挡，而透明的物体应该产生部分的遮挡，那么我们就需要针对不同RenderType的物体写不同的Shader，RenderType是SubShader的Tag，不清楚的话可以看<a href="http://docs.unity3d.com/Documentation/Components/SL-SubshaderTags.html">这里</a>，写好之后调用：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">camera</span><span class="p">.</span><span class="nf">RenderWithShader</span><span class="p">(</span><span class="n">objectOcclusionShader</span><span class="p">,</span> <span class="s">"RenderType"</span><span class="p">);</span>
+
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">RenderWithShader</code>的第二个参数就是要求根据RenderType来替换Shader，简单来说，同一个物体的替换的Shader的RenderType要跟替换前一致，这样我们就可以为不同的RenderType的物体使用不同的Shader：</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Shader</span> <span class="s">"Custom/ObjectOcclusion"</span> 
+<span class="p">{</span>
+	<span class="n">Properties</span> 
+	<span class="p">{</span>
+		<span class="n">_MainTex</span> <span class="p">(</span><span class="s">"Base (RGB)"</span><span class="p">,</span> <span class="mi">2</span><span class="n">D</span><span class="p">)</span> <span class="o">=</span> <span class="s">"white"</span> <span class="p">{}</span>
+	<span class="p">}</span>
+	<span class="n">SubShader</span> 
+	<span class="p">{</span>
+		<span class="n">Tags</span> 
+		<span class="p">{</span>
+			<span class="s">"Queue"</span> <span class="o">=</span> <span class="s">"Geometry"</span>
+			<span class="s">"RenderType"</span> <span class="o">=</span> <span class="s">"Opaque"</span>
+		<span class="p">}</span>
+		<span class="n">LOD</span> <span class="mi">200</span>
+		<span class="n">Pass</span>
+		<span class="p">{</span>
+			<span class="n">Lighting</span> <span class="n">Off</span>
+			<span class="n">ZTest</span> <span class="n">Always</span> <span class="n">Cull</span> <span class="n">Off</span> <span class="n">ZWrite</span> <span class="n">Off</span>
+			<span class="n">Fog</span> <span class="p">{</span> <span class="n">Mode</span> <span class="n">off</span> <span class="p">}</span>
+			<span class="n">CGPROGRAM</span>
+			<span class="cp">#pragma vertex vert
+</span>			<span class="cp">#pragma fragment frag
+</span>			<span class="cp">#include</span> <span class="cpf">"UnityCG.cginc"</span><span class="cp">
+</span>			
+			<span class="k">uniform</span> <span class="kt">sampler2D</span> <span class="n">_MainTex</span><span class="p">;</span>
+			
+			<span class="n">v2f_img</span> <span class="n">vert</span><span class="p">(</span><span class="n">appdata_img</span> <span class="n">i</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="n">v2f_img</span> <span class="n">o</span><span class="p">;</span>
+				<span class="n">o</span><span class="p">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">UNITY_MATRIX_MVP</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">vertex</span><span class="p">);</span>
+				<span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+			<span class="p">}</span>
+			
+			<span class="n">half4</span> <span class="n">frag</span><span class="p">(</span><span class="n">v2f_img</span> <span class="n">i</span><span class="p">)</span><span class="o">:</span> <span class="n">COLOR</span>
+			<span class="p">{</span>
+				<span class="k">return</span> <span class="n">half4</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+			<span class="p">}</span>
+			<span class="n">ENDCG</span>
+		<span class="p">}</span>
+
+	<span class="p">}</span>
+		<span class="n">SubShader</span> 
+	<span class="p">{</span>
+		<span class="n">Tags</span> 
+		<span class="p">{</span>
+			<span class="s">"Queue"</span> <span class="o">=</span> <span class="s">"Geometry"</span>
+			<span class="s">"RenderType"</span> <span class="o">=</span> <span class="s">"Transparent"</span>
+		<span class="p">}</span>
+		<span class="n">LOD</span> <span class="mi">200</span>
+		<span class="n">Pass</span>
+		<span class="p">{</span>
+			<span class="n">Lighting</span> <span class="n">Off</span>
+			<span class="n">ZTest</span> <span class="n">Always</span> <span class="n">Cull</span> <span class="n">Off</span> <span class="n">ZWrite</span> <span class="n">Off</span>
+			<span class="n">Fog</span> <span class="p">{</span> <span class="n">Mode</span> <span class="n">off</span> <span class="p">}</span>
+			<span class="n">Blend</span> <span class="n">SrcAlpha</span> <span class="n">OneMinusSrcAlpha</span>		<span class="c1">// blend for transparent objects</span>
+			<span class="n">CGPROGRAM</span>
+			<span class="cp">#pragma vertex vert
+</span>			<span class="cp">#pragma fragment frag
+</span>			<span class="cp">#include</span> <span class="cpf">"UnityCG.cginc"</span><span class="cp">
+</span>			
+			<span class="k">uniform</span> <span class="kt">sampler2D</span> <span class="n">_MainTex</span><span class="p">;</span>
+			
+			<span class="n">v2f_img</span> <span class="n">vert</span><span class="p">(</span><span class="n">appdata_img</span> <span class="n">i</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="n">v2f_img</span> <span class="n">o</span><span class="p">;</span>
+				<span class="n">o</span><span class="p">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">UNITY_MATRIX_MVP</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">vertex</span><span class="p">);</span>
+				<span class="n">o</span><span class="p">.</span><span class="n">uv</span> <span class="o">=</span> <span class="n">MultiplyUV</span><span class="p">(</span> <span class="n">UNITY_MATRIX_TEXTURE0</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">texcoord</span> <span class="p">);</span>
+				<span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+			<span class="p">}</span>
+			
+			<span class="n">half4</span> <span class="n">frag</span><span class="p">(</span><span class="n">v2f_img</span> <span class="n">i</span><span class="p">)</span><span class="o">:</span> <span class="n">COLOR</span>
+			<span class="p">{</span>
+				<span class="n">half3</span> <span class="kr">output</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+				<span class="n">half4</span> <span class="n">color</span> <span class="o">=</span> <span class="n">tex2D</span><span class="p">(</span><span class="n">_MainTex</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">);</span>
+				<span class="kr">half</span> <span class="n">alpha</span> <span class="o">=</span> <span class="n">color</span><span class="p">.</span><span class="n">a</span><span class="p">;</span>
+				<span class="k">return</span> <span class="n">half4</span><span class="p">(</span><span class="kr">output</span> <span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">alpha</span><span class="p">),</span> <span class="n">alpha</span><span class="p">);</span>
+			<span class="p">}</span>
+			<span class="n">ENDCG</span>
+		<span class="p">}</span>
+
+	<span class="p">}</span>
+		
+	<span class="n">FallBack</span> <span class="s">"Diffuse"</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>注意不透明和透明物体的Shader间的差别：不透明的物体直接画成黑色；不透明物体需要执行blending，获取物体纹理上的alpha通道，并基于这个alpha进行blending。上面代码只是列举了Opaque和Transparent，另外还有TreeOpaque (Shader跟Opaque一样，只是改变RenderType) ，TreeTransparentCutout (同Transparent) 等。由于指定了RenderType，所以为了全面，需要尽可能穷尽场景中的会发生遮挡的物体，我这里就只有前面提到的四种。结果大致如下：</p>
+
+<p><img src="/assets/post_assets/2014-3-30-unity-light-scattering/objectocclusion.png" alt="objectocclusion.png" title="objectocclusion.png" /></p>
+
+<h2 id="结合物体遮挡画光源辐射">结合物体遮挡画光源辐射</h2>
+
+<p>画光源的辐射不难，需要注意的是需要根据屏幕的大小做一些处理，使得光源的辐射状是圆形的：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Shader</span> <span class="s">"Custom/LightRadiate"</span> 
+<span class="p">{</span>
+	<span class="n">Properties</span> 
+	<span class="p">{</span>
+		<span class="nf">_MainTex</span> <span class="p">(</span><span class="s">"Base (RGB)"</span><span class="p">,</span> <span class="n">RECT</span><span class="p">)</span> <span class="p">=</span> <span class="s">"white"</span> <span class="p">{}</span>
+		<span class="nf">_LightPos</span> <span class="p">(</span><span class="s">"Light Pos In Screen Space(XY)"</span><span class="p">,</span> <span class="n">Vector</span><span class="p">)</span> <span class="p">=</span> <span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">)</span>
+		<span class="nf">_LightRadius</span> <span class="p">(</span><span class="s">"Light radiation radius (Pixel)"</span><span class="p">,</span> <span class="n">Float</span><span class="p">)</span> <span class="p">=</span> <span class="m">50</span>
+	<span class="p">}</span>
+	<span class="n">SubShader</span> 
+	<span class="p">{</span>
+		<span class="n">Tags</span> <span class="p">{</span> <span class="s">"RenderType"</span><span class="p">=</span><span class="s">"Opaque"</span> <span class="p">}</span>
+		<span class="n">LOD</span> <span class="m">200</span>
+		<span class="n">Pass</span>
+		<span class="p">{</span>
+			<span class="n">ZTest</span> <span class="n">Always</span> <span class="n">Cull</span> <span class="n">Off</span> <span class="n">ZWrite</span> <span class="n">Off</span>
+			<span class="n">Fog</span> <span class="p">{</span> <span class="n">Mode</span> <span class="n">off</span> <span class="p">}</span>
+			<span class="n">CGPROGRAM</span>
+			<span class="err">#</span><span class="n">pragma</span> <span class="n">vertex</span> <span class="n">vert</span>
+			<span class="err">#</span><span class="n">pragma</span> <span class="n">fragment</span> <span class="n">frag</span>
+			<span class="err">#</span><span class="n">include</span> <span class="s">"UnityCG.cginc"</span>
+			
+			<span class="n">uniform</span> <span class="n">sampler2D</span> <span class="n">_MainTex</span><span class="p">;</span>
+			<span class="n">float4</span> <span class="n">_LightPos</span><span class="p">;</span>
+			<span class="kt">float</span> <span class="n">_LightRadius</span><span class="p">;</span>
+			
+			<span class="n">v2f_img</span> <span class="nf">vert</span><span class="p">(</span><span class="n">appdata_img</span> <span class="n">i</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="n">v2f_img</span> <span class="n">o</span><span class="p">;</span>
+				<span class="n">o</span><span class="p">.</span><span class="n">pos</span> <span class="p">=</span> <span class="nf">mul</span> <span class="p">(</span><span class="n">UNITY_MATRIX_MVP</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">vertex</span><span class="p">);</span>
+				<span class="n">o</span><span class="p">.</span><span class="n">uv</span> <span class="p">=</span> <span class="nf">MultiplyUV</span><span class="p">(</span> <span class="n">UNITY_MATRIX_TEXTURE0</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">texcoord</span> <span class="p">);</span>
+				<span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+			<span class="p">}</span>
+			
+			<span class="n">half4</span> <span class="nf">frag</span><span class="p">(</span><span class="n">v2f_img</span> <span class="n">i</span><span class="p">):</span> <span class="n">COLOR</span>
+			<span class="p">{</span>
+				<span class="n">half2</span> <span class="n">deltaTexCoord</span> <span class="p">=</span> <span class="p">(</span><span class="n">i</span><span class="p">.</span><span class="n">uv</span> <span class="p">-</span> <span class="n">_LightPos</span><span class="p">.</span><span class="n">xy</span><span class="p">)</span> <span class="p">*</span> <span class="nf">half2</span><span class="p">(</span><span class="n">_ScreenParams</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">_ScreenParams</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+				<span class="kt">float</span> <span class="n">dis</span> <span class="p">=</span> <span class="nf">dot</span><span class="p">(</span><span class="n">deltaTexCoord</span><span class="p">,</span> <span class="n">deltaTexCoord</span><span class="p">);</span>
+				<span class="k">const</span> <span class="kt">float</span> <span class="n">maxDis</span> <span class="p">=</span> <span class="n">_LightRadius</span> <span class="p">*</span> <span class="n">_LightRadius</span><span class="p">;</span>
+				<span class="n">dis</span> <span class="p">=</span> <span class="nf">saturate</span><span class="p">((</span><span class="n">maxDis</span><span class="p">-</span><span class="n">dis</span><span class="p">)</span> <span class="p">/</span> <span class="n">maxDis</span> <span class="p">*</span> <span class="m">0.5</span><span class="p">);</span>
+				<span class="k">return</span> <span class="nf">half4</span><span class="p">(</span><span class="n">dis</span><span class="p">,</span> <span class="n">dis</span><span class="p">,</span> <span class="n">dis</span><span class="p">,</span> <span class="m">1</span><span class="p">)</span> <span class="p">*</span> <span class="nf">half4</span><span class="p">(</span><span class="nf">tex2D</span><span class="p">(</span><span class="n">_MainTex</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">).</span><span class="n">rgb</span><span class="p">,</span> <span class="m">1</span><span class="p">);</span>				
+			<span class="p">}</span>
+			
+			<span class="n">ENDCG</span>
+		<span class="p">}</span>
+	<span class="p">}</span> 
+	<span class="n">FallBack</span> <span class="s">"Diffuse"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个Shader需要输入光源在屏幕上的位置(可以用<code class="language-plaintext highlighter-rouge">camera.WorldToViewportPoint</code>来计算，得到的是uv坐标)，然后根据指定的半径画一个亮度往外衰减的圆，并把结果跟前面得到的物体遮挡图像(放在<code class="language-plaintext highlighter-rouge">_MainTex</code>里)结合，结果大致为：</p>
+
+<p><img src="/assets/post_assets/2014-3-30-unity-light-scattering/light.png" alt="light.png" title="light.png" /></p>
+
+<h2 id="light-scattering处理并结合真实颜色">Light Scattering处理，并结合真实颜色</h2>
+
+<p>这里就要用到书上提供的Pixel Shader，我的版本：</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Shader</span> <span class="s">"Custom/LightScattering"</span> 
+<span class="p">{</span>
+	<span class="n">Properties</span> 
+	<span class="p">{</span>
+		<span class="n">_MainTex</span> <span class="p">(</span><span class="s">"Base (RGB)"</span><span class="p">,</span> <span class="mi">2</span><span class="n">D</span><span class="p">)</span> <span class="o">=</span> <span class="s">"white"</span> <span class="p">{}</span>
+		<span class="n">_LightRadTex</span><span class="p">(</span><span class="s">"Light Radiate Tex (RGB)"</span><span class="p">,</span> <span class="mi">2</span><span class="n">D</span><span class="p">)</span> <span class="o">=</span> <span class="s">"white"</span> <span class="p">{}</span>
+		<span class="n">_LightPos</span> <span class="p">(</span><span class="s">"Light Pos In Screen Space(XY)"</span><span class="p">,</span> <span class="n">Vector</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+		<span class="n">_Params</span><span class="p">(</span><span class="s">"Density Weight Decay Exposure"</span><span class="p">,</span> <span class="n">Vector</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="n">SubShader</span> 
+	<span class="p">{</span>
+		<span class="n">LOD</span> <span class="mi">200</span>
+		<span class="n">Pass</span>
+		<span class="p">{</span>
+			<span class="n">ZTest</span> <span class="n">Always</span> <span class="n">Cull</span> <span class="n">Off</span> <span class="n">ZWrite</span> <span class="n">Off</span>
+			<span class="n">Fog</span> <span class="p">{</span> <span class="n">Mode</span> <span class="n">off</span> <span class="p">}</span>	
+			<span class="n">CGPROGRAM</span>
+			<span class="cp">#pragma vertex vert
+</span>			<span class="cp">#pragma fragment frag
+</span>			<span class="cp">#pragma target 3.0
+</span>			<span class="cp">#include</span> <span class="cpf">"UnityCG.cginc"</span><span class="cp">
+</span>			
+			<span class="k">uniform</span> <span class="kt">sampler2D</span> <span class="n">_MainTex</span><span class="p">;</span>
+			<span class="k">uniform</span> <span class="kt">sampler2D</span> <span class="n">_LightRadTex</span><span class="p">;</span>
+			<span class="k">uniform</span> <span class="n">float4</span> <span class="n">_LightPos</span><span class="p">;</span>
+			<span class="k">uniform</span> <span class="n">float4</span> <span class="n">_Params</span><span class="p">;</span>
+			
+			<span class="n">v2f_img</span> <span class="n">vert</span><span class="p">(</span><span class="n">appdata_img</span> <span class="n">i</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="n">v2f_img</span> <span class="n">o</span><span class="p">;</span>
+				<span class="n">o</span><span class="p">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">UNITY_MATRIX_MVP</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">vertex</span><span class="p">);</span>
+				<span class="n">o</span><span class="p">.</span><span class="n">uv</span> <span class="o">=</span> <span class="n">MultiplyUV</span><span class="p">(</span> <span class="n">UNITY_MATRIX_TEXTURE0</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">texcoord</span> <span class="p">);</span>
+				<span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+			<span class="p">}</span>
+			
+			<span class="n">half4</span> <span class="n">frag</span><span class="p">(</span><span class="n">v2f_img</span> <span class="n">i</span><span class="p">)</span><span class="o">:</span> <span class="n">COLOR</span>
+			<span class="p">{</span>	
+				<span class="c1">// Calculate vector from pixel to light source in screen space</span>
+				<span class="n">float2</span> <span class="n">deltaTexCoord</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="p">.</span><span class="n">uv</span> <span class="o">-</span> <span class="n">_LightPos</span><span class="p">.</span><span class="n">xy</span><span class="p">);</span>
+				
+				<span class="c1">// Divide by number of samples and scale by control factor, here I use 32 samples</span>
+				<span class="n">deltaTexCoord</span> <span class="o">*=</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="n">f</span> <span class="o">/</span> <span class="mi">32</span> <span class="o">*</span> <span class="n">_Params</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>	<span class="c1">//density;</span>
+				
+				<span class="c1">// Store color.</span>
+				<span class="n">half3</span> <span class="n">color</span> <span class="o">=</span> <span class="n">tex2D</span><span class="p">(</span><span class="n">_MainTex</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">).</span><span class="n">rgb</span><span class="p">;</span>
+				
+				<span class="c1">// Store initial sample.</span>
+				<span class="n">half3</span> <span class="n">light</span> <span class="o">=</span> <span class="n">tex2D</span><span class="p">(</span><span class="n">_LightRadTex</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">).</span><span class="n">rgb</span><span class="p">;</span>
+	
+				<span class="c1">// Set up illumination decay factor.</span>
+				<span class="kr">half</span> <span class="n">illuminationDecay</span> <span class="o">=</span> <span class="mi">1</span><span class="p">.</span><span class="mi">0</span><span class="n">f</span><span class="p">;</span>
+
+				<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">31</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span><span class="p">)</span>
+				<span class="p">{</span>
+					<span class="c1">// Step sample location along ray.</span>
+					<span class="n">i</span><span class="p">.</span><span class="n">uv</span> <span class="o">-=</span> <span class="n">deltaTexCoord</span><span class="p">;</span>
+					
+					<span class="c1">// Retrieve sample at new location.</span>
+					<span class="n">half3</span> <span class="k">sample</span> <span class="o">=</span> <span class="n">tex2D</span><span class="p">(</span><span class="n">_LightRadTex</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">).</span><span class="n">rgb</span><span class="p">;</span>
+					
+					<span class="c1">// Apply sample attenuation scale/decay factors.</span>
+					<span class="k">sample</span> <span class="o">*=</span> <span class="n">illuminationDecay</span> <span class="o">*</span> <span class="mi">0</span><span class="p">.</span><span class="mo">03125</span> <span class="o">*</span> <span class="n">_Params</span><span class="p">.</span><span class="n">y</span> <span class="p">;</span>	<span class="c1">//weight;</span>
+					
+					<span class="c1">// Accumulate combined light.</span>
+					<span class="n">light</span> <span class="o">+=</span> <span class="k">sample</span><span class="p">;</span>
+					
+					<span class="c1">// Update exponential decay factor.</span>
+					<span class="n">illuminationDecay</span> <span class="o">*=</span> <span class="n">_Params</span><span class="p">.</span><span class="n">z</span><span class="p">;</span>				<span class="c1">//decay;</span>
+				<span class="p">}</span>
+				
+				<span class="c1">// Output final color with a further scale control factor.</span>
+				<span class="k">return</span> <span class="n">half4</span><span class="p">(</span><span class="n">color</span><span class="o">+</span><span class="p">(</span><span class="n">light</span> <span class="o">*</span> <span class="n">_Params</span><span class="p">.</span><span class="n">w</span><span class="p">),</span> <span class="mi">1</span><span class="p">);</span>	<span class="c1">// exposure</span>
+			<span class="p">}</span>
+			
+			<span class="n">ENDCG</span>		
+		<span class="p">}</span>
+
+	<span class="p">}</span> 
+	<span class="n">FallBack</span> <span class="s">"Diffuse"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>大体上跟书上的一致，只是我的参数需要在程序中传进来，并且结合了真实的颜色图和Light Scattering图，结果：</p>
+
+<p><img src="/assets/post_assets/2014-3-30-unity-light-scattering/effect.gif" alt="effect.gif" title="effect.gif" /></p>
+
+<h2 id="完整代码">完整代码</h2>
+
+<p>代码在<a href="/assets/post_assets/2014-3-30-unity-light-scattering/2014-3-30-unity-light-scattering.zip">这里</a>，把<code class="language-plaintext highlighter-rouge">cs</code>脚本添加到相机上。</p>
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> Unity实现体积光照散射 (Volumetric Light Scattering，云隙光) </a>。
+                </p>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2014/03/27/unity-depth-minimap" data-toggle="tooltip" data-placement="top" title="Unity画深度图(Depth Map)和边缘检测(Edge Detection)">
+                            前一篇<br>
+                            <span>Unity画深度图(Depth Map)和边缘检测(Edge Detection)</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2016/06/01/vs2015-python" data-toggle="tooltip" data-placement="top" title="使用 Visual Studio 2015 编译 Python 2.7.11">
+                            后一篇<br>
+                            <span>使用 Visual Studio 2015 编译 Python 2.7.11</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br/><br/>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2014/03/30/unity-light-scattering>" class="leancloud_visitors" data-flag-title="Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="og:title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+</body>
+
+</html>

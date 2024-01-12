@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="English" href="/en/">
+                            
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Page Header -->
+<header class="intro-header" style="background-image: url('/img/green.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="site-heading">
+                    <h1>Disenone</h1>
+                    <hr class="small">
+                    <span class="subheading">work smarter</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+	<div class="row">
+		<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+			
+<div class="post-preview">
+    <a href="/2024/01/12/new-wiki">
+        <h2 class="post-title">            
+            欢迎访问新的博客
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+本博客已经半废弃，新的文章会更新在新的博客里面，欢迎访问 wiki
+-->
+            欢迎访问新的博客 [wiki](https://disenone.github.io/wiki/)
+        </div>
+
+        <!---->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on January 12, 2024</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2023/01/12/python-talk-builtin">
+        <h2 class="post-title">            
+            Python 杂谈 1 - 探究 __builtins__
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+引子
+
+我们知道，__builtins__ 本身是在全局命名空间中就有的一个对象，是 Python 故意暴露出来给代码层的，在代码的任意地方都可以直接使用。但是有点冷的知识是，__builtins__ 在 main 模块（也就是 __main__，指的都是同一个模块，后文可能会混用）里面是...-->
+            __builtin__ 跟 __builtins__ 有什么区别？__builtins__ 在 main 模块跟其他模块是不同的？为什么会设定成不同？__builtins__ 是在哪里定义的？本文我们来探讨一下关于 __builtins__ 的冷知识，并且还有一些引申的内容，不容错过。
+
+        </div>
+
+        <!---->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on January 12, 2023</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2021/11/18/aoi-tesing">
+        <h2 class="post-title">            
+            游戏 AOI 算法解析和性能实测
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+引子
+
+AOI (Area Of Interest) 在多人在线游戏中是很基本的功能，玩家需要接收进入视野范围内的其他玩家或者实体 (Entity) 的信息。计算玩家视野范围内存在哪些实体，有哪些实体进入或离开视野的算法，我们一般称之为 AOI 算法。
+
+本文讨论九宫格和十字链两种 AOI...-->
+            本文讨论九宫格和十字链两种算法，并给出两种算法的实测性能分析，让你用起来心中有数，遇事不慌。
+
+        </div>
+
+        <!---->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on November 18, 2021</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2021/03/31/cpp-preprocess">
+        <h2 class="post-title">            
+            C/C++ 宏编程解析
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+本文的目的是要讲清楚 C/C++ 的宏编程的规则和实现方法，让你不再惧怕看到代码里面的宏。我会首先说说 C++ 标准 14 里面提到的关于宏展开的规则，然后通过修改 Clang 的源码来观察宏展开，最后基于这些知识来聊聊宏编程的实现。
+
+本文的代码全部都在这里：下载，在线演示。
+
+引子
+
+...-->
+            本文的目的是要讲清楚 C/C++ 宏编程的规则和实现方法，让你不再惧怕看到代码里面的宏。
+
+        </div>
+
+        <!---->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on March 31, 2021</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2019/12/17/kcp">
+        <h2 class="post-title">            
+            KCP 源码剖析
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+阅读本文之前，如果没听说过 KCP ，或者一点都不了解 KCP，麻烦抽一点时间先看看 KCP 项目的说明文档：传送门。本文的目的是深入 KCP 的实现细节去理解 KCP 。
+
+什么是 KCP
+
+KCP 是一个快速可靠协议，能够以比 TCP 更低的延迟来传送数据，数据重传更快，等待时间更短。...-->
+            本文简单地分析了 KCP 的源码，并讨论了 KCP 上 ARQ 的实现，和一些 KCP 提升流速的策略。
+
+        </div>
+
+        <!---->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on December 17, 2019</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2016/11/19/aparsing">
+        <h2 class="post-title">            
+            C/C++ 的命令行参数处理总结
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+
+
+
+
+
+
+前一阵子翻 Linux 内核代码的时候看到了内核对模块参数 (moduleparam) 的处理，觉得挺精妙，让我不禁想研究下 C 下的命令行参数要怎样更好地处理。本文所用代码都在这里 aparsing 。代码支持在 Windows 、 Linux 、 Mac OS X 下编译运...-->
+            前一阵子翻 Linux 内核代码的时候看到了内核对模块参数 (moduleparam) 的处理，觉得挺精妙，让我不禁想研究下 C 下的命令行参数要怎样更好地处理。
+
+        </div>
+
+        <!---->
+        
+            <!--<a href="/2016/11/19/aparsing">-->
+            <img src="assets/post_assets/2016-11-19-aparsing/aparsing.png"  width="200"  style="display: inline-block"/>  <!--</a>-->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on November 19, 2016</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2016/06/11/memory-leak-detector">
+        <h2 class="post-title">            
+            编写 Windows 下的 Memory Leak Detector
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+
+
+
+前言
+
+这一阵子读完了《程序员的自我修养：链接、装载与库》（后面简称《链接》），收获良多，寻思着能不能做些相关的小代码出来。刚好知道 Windows 下有个内存泄露检测工具 Visual Leak Detector，这个工具是通过替换 Windows 下负责内存管理的 dll 接口来...-->
+            这一阵子读完了《程序员的自我修养：链接、装载与库》（后面简称《链接》），收获良多，寻思着能不能做些相关的小代码出来。刚好知道 Windows 下有个内存泄露检测工具 [Visual Leak Detector](https://vld.codeplex.com/)，这个工具是通过替换 Windows 下负责内存管理的 dll 接口来实现跟踪内存分配释放。所以决定参考 Visual Leak Detector （后面简称 VLD）来做个简易的内存泄露检测工具，理解 dll 链接。
+
+        </div>
+
+        <!---->
+        
+            <!--<a href="/2016/06/11/memory-leak-detector">-->
+            <img src="assets/post_assets/2016-6-11-memory-leak-detector/depends.png"  width="200"  style="display: inline-block"/>  <!--</a>-->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on June 11, 2016</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2016/06/01/vs2015-python">
+        <h2 class="post-title">            
+            使用 Visual Studio 2015 编译 Python 2.7.11
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+
+
+
+原因
+
+Python 2.7 的官方版本支持 Visual Studio 2010 以下版本来编译，参考 PCbuild\readme.txt：
+
+1.  Install Microsoft Visual Studio 2008, any edition.
+2.  Install M...-->
+            Python 2.7 的官方版本支持 Visual Studio 2010 以下版本来编译，如果你想在 Windows 下自己倒腾 Python，譬如编译个 Debug 版本、自己改改源代码等，那么最简单的方法就是装一个 VS2010。但是对我个人来说， 我更想要用 VS2015 来编译 Python，原因主要有...
+
+        </div>
+
+        <!---->
+        
+            <!--<a href="/2016/06/01/vs2015-python">-->
+            <img src="https://img.shields.io/badge/python-2.7.11-brightgreen.svg"   style="display: inline-block"/>  <!--</a>-->
+        
+            <!--<a href="/2016/06/01/vs2015-python">-->
+            <img src="https://img.shields.io/badge/vs-2015-68217A.svg"   style="display: inline-block"/>  <!--</a>-->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on June 1, 2016</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2014/03/30/unity-light-scattering">
+        <h2 class="post-title">            
+            Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+原理
+
+Volumetric Light Scattering 的原理可以参考《GPU Gems 3》第13章，书上有效果图：
+
+
+
+好看吧，那好，我们的目标就是实现这种效果。
+
+书上介绍了原理，一条关键的公式是：
+
+\[ L(s, \theta, \phi) = exposure \ti...-->
+            体积光散射是一个挺不错的视觉效果，你仿佛看到了光线在空中的传播，空中的微粒被光照亮，而部分光线又被遮挡住，视觉上会产生从光源辐射出的光线。
+
+        </div>
+
+        <!---->
+        
+            <!--<a href="/2014/03/30/unity-light-scattering">-->
+            <img src="assets/post_assets/2014-3-30-unity-light-scattering/effect.gif"  width="200"  style="display: inline-block"/>  <!--</a>-->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on March 30, 2014</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2014/03/27/unity-depth-minimap">
+        <h2 class="post-title">            
+            Unity画深度图(Depth Map)和边缘检测(Edge Detection)
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+刚接触Unity没多久，对Unity的ShaderLab一直很感兴趣，感觉它可以快速地实现各种各样的显示效果，很有意思。嘛，作为一个门都还没入的人，我就来搞一搞深度图和边缘检测吧。
+
+小地图设置
+
+因为我只是做了一个小雏形，所以我不打算详细地讲如何去在场景上画小地图，大致上说我做了以下一些...-->
+            发现Unity的RenderWithShader()和OnRenderImage()可以用来实现很多效果，趁着学习的机会，我决定用这两个函数实现场景深度图的生成和场景边缘检测，可用来作为游戏的一种小地图。
+
+        </div>
+
+        <!---->
+        
+            <!--<a href="/2014/03/27/unity-depth-minimap">-->
+            <img src="assets/post_assets/2014-3-27-unity-depth-minimap/topview.png"  width="200"  style="display: inline-block"/>  <!--</a>-->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on March 27, 2014</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2014/03/15/unity-3rdperson-control0">
+        <h2 class="post-title">            
+            Unity人物控制
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+人物的动作控制是游戏里面很重要的一部分，操作性强的游戏能够很好的吸引玩家。这里我就尝试做一个简单的人物操作控制，人物能够完成基本的移动，包括行走，跳跃。
+
+需求
+先来考虑一下，我们的人物操作具体的需求：
+
+
+  行走，能够在刚体的表面行走，由按键上下左右输入来控制，暂不考虑加速减速过程
+ ...-->
+            人物的动作控制是游戏里面很重要的一部分，操作性强的游戏能够很好的吸引玩家。这里我就尝试做一个简单的人物操作控制，人物能够完成基本的移动，包括行走，跳跃。
+
+        </div>
+
+        <!---->
+        
+            <!--<a href="/2014/03/15/unity-3rdperson-control0">-->
+            <img src="assets/post_assets/2014-3-15-unity-3rdperson-control0/run_jump.gif"  width="200"  style="display: inline-block"/>  <!--</a>-->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on March 15, 2014</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2014/03/14/unity-3rdcamera-create1">
+        <h2 class="post-title">            
+            Unity第三人称相机构建(下)
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+上一集讲完了相机的旋转，那么现在我们要解决的问题是相机的刚性，要怎么做呢？
+
+相机刚性
+回顾之前提的需求：
+
+
+  鼠标滚轮：控制相机远近
+  相机不能穿过任何刚性物体
+  相机在离开碰撞的刚性物体后，慢慢回到原来的距离上
+  如果相机在碰到刚体时，使用鼠标滚轮操作相机拉近，相机需要马上反...-->
+            我想在Unity中创建一个第三人称相机，相机的行为参考《魔兽世界》的第三人称相机。这里来解决相机的刚体问题。
+        </div>
+
+        <!---->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on March 14, 2014</p>
+</div>
+
+<hr>
+
+<div class="post-preview">
+    <a href="/2014/03/13/unity-3rdcamera-create0">
+        <h2 class="post-title">            
+            Unity第三人称相机构建(上)
+        </h2>
+        
+
+        <div class="post-content-preview">
+            <!--
+
+我想在Unity中创建一个第三人称相机，相机的行为参考《魔兽世界》的第三人称相机，具体的需求是：
+
+
+  鼠标左键：控制相机围绕人物旋转，人物不旋转
+  鼠标右键：控制相机围绕人物旋转，人物的前方向(Unity中的tranform.forward)相应旋转，人物上方向不变
+  鼠标左键旋转...-->
+            我想在Unity中创建一个第三人称相机，相机的行为参考《魔兽世界》的第三人称相机。这里先来解决相机的旋转问题。
+        </div>
+
+        <!---->
+        
+    </a>
+    <p class="post-meta">Posted by Disenone on March 13, 2014</p>
+</div>
+
+<hr>
+
+
+<!-- Pager -->
+
+
+		</div>
+	</div>
+</div>
+
+<hr>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+
+
+
+</body>
+
+</html>

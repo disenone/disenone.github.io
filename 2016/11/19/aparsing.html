@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>C/C++ 的命令行参数处理总结 - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/2016/11/19/aparsing">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="English" href="/en/2016/11/19/aparsing">
+                            
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/Tags/#dev" title="dev">dev</a>
+                        
+                    </div>
+                    <h1>C/C++ 的命令行参数处理总结</h1>
+                    
+                    <span class="meta">Posted by Disenone on November 19, 2016</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> C/C++ 的命令行参数处理总结 </a>。
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="C/C++ 的命令行参数处理总结" />
+
+<p><img src="https://img.shields.io/badge/vs-2015-68217A.svg" alt="" style="display: inline-block" />
+<img src="https://img.shields.io/badge/gcc-4.9-blue.svg" alt="" style="display: inline-block" />
+<img src="https://img.shields.io/badge/clang-3.7-birghtgreen.svg" alt="" style="display: inline-block" /></p>
+
+<p><img src="/assets/post_assets/2016-11-19-aparsing/aparsing.png" alt="aparsing.png" title="aparsing.png" /></p>
+
+<p>前一阵子翻 Linux 内核代码的时候看到了内核对模块参数 (moduleparam) 的处理，觉得挺精妙，让我不禁想研究下 C 下的命令行参数要怎样更好地处理。本文所用代码都在这里 <a href="https://github.com/disenone/aparsing">aparsing</a> 。代码支持在 Windows 、 Linux 、 Mac OS X 下编译运行，详细的编译指南在 README.md 里面。</p>
+
+<h2 id="getenv">getenv</h2>
+
+<p>标准库为我们提供了一个函数 <code class="language-plaintext highlighter-rouge">getenv</code> ，按照字面意思，这个函数是用来获取环境变量的，那么只要我们预先设置好需要的环境变量，在程序里面拿出来，就间接地把参数传到程序里面啦。我们来看下面这段<a href="https://github.com/disenone/aparsing/blob/master/getenv/getenv_test.c">代码</a>：</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+</pre></td><td class="code"><pre><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span>
+<span class="c1">//char *getenv( const char *name );</span>
+<span class="c1">//GETENV_ADD=abc GETENV_NUM=2 ./getenv_test </span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">add</span><span class="p">,</span> <span class="o">*</span><span class="n">num</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">((</span><span class="n">add</span> <span class="o">=</span> <span class="n">getenv</span><span class="p">(</span><span class="s">"GETENV_ADD"</span><span class="p">)))</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"GETENV_ADD = %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">add</span><span class="p">);</span>
+    <span class="k">else</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"GETENV_ADD not found</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">((</span><span class="n">num</span> <span class="o">=</span> <span class="n">getenv</span><span class="p">(</span><span class="s">"GETENV_NUM"</span><span class="p">)))</span>
+    <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">numi</span> <span class="o">=</span> <span class="n">atoi</span><span class="p">(</span><span class="n">num</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"GETENV_NUM = %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">numi</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+        <span class="nf">printf</span><span class="p">(</span><span class="s">"GETENV_NUM not found</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p><code class="language-plaintext highlighter-rouge">getenv</code> 函数声明如第 4 行，传入想要获取的变量名字，返回该变量的值，如果找不到变量，则返回0。10 和 15 行就是分别获取两个环境变量的值，如果变量有效则打印变量值。需要注意的是 <code class="language-plaintext highlighter-rouge">getenv</code> 返回的都是字符串，需要使用者手动转换数值类型的，所以使用起来不够方便。编译运行:</p>
+
+<p>Windows 下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>set GETENV_ADD=abc &amp; set GETENV_NUM=1 &amp; .\getenv_test.exe
+</code></pre></div></div>
+
+<p>Linux 下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GETENV_ADD=abc GETENV_NUM=2 ./getenv_test 
+</code></pre></div></div>
+
+<p>输出：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GETENV_ADD = abc
+GETENV_NUM = 2
+</code></pre></div></div>
+
+<h2 id="getopt">getopt</h2>
+
+<p>Linux 给我们提供了一组函数 <code class="language-plaintext highlighter-rouge">getopt, getopt_long, getopt_long_only</code> 来处理命令行传递进来的函数，这三个函数的声明分别是：</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre></td><td class="code"><pre><span class="k">extern</span> <span class="kt">char</span> <span class="o">*</span><span class="n">optarg</span><span class="p">;</span>
+<span class="k">extern</span> <span class="kt">int</span> <span class="n">optind</span><span class="p">,</span> <span class="n">opterr</span><span class="p">,</span> <span class="n">optopt</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">getopt</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="k">const</span> <span class="n">argv</span><span class="p">[],</span>
+                  <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">optstring</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">getopt_long</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="k">const</span> <span class="n">argv</span><span class="p">[],</span>
+            <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">optstring</span><span class="p">,</span>
+            <span class="k">const</span> <span class="k">struct</span> <span class="nc">option</span> <span class="o">*</span><span class="n">longopts</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">longindex</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">getopt_long_only</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="k">const</span> <span class="n">argv</span><span class="p">[],</span>
+            <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">optstring</span><span class="p">,</span>
+            <span class="k">const</span> <span class="k">struct</span> <span class="nc">option</span> <span class="o">*</span><span class="n">longopts</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">longindex</span><span class="p">);</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p><code class="language-plaintext highlighter-rouge">getopt</code> 只能处理短参数（即单字符参数），<code class="language-plaintext highlighter-rouge">getopt_long, getopt_long_only</code> 则可以处理长参数。详细的函数解释可以去翻 Linux 下的手册，下面我们通过例子来说明 <code class="language-plaintext highlighter-rouge">getopt</code> 和 <code class="language-plaintext highlighter-rouge">getopt_long</code> 的用法。</p>
+
+<p>需要注意的是， Windows 下是没有提供这一组函数的，所以我找了一份可以在 Windows 下编译的源码，做了小小的改动，代码都在<a href="https://github.com/disenone/aparsing/tree/master/getopt">这里</a>。</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+</pre></td><td class="code"><pre><span class="c1">// test getopt</span>
+
+<span class="cp">#include</span> <span class="cpf">&lt;getopt.h&gt;</span><span class="cp">
+#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span>
+<span class="k">static</span> <span class="k">struct</span> <span class="nc">option</span> <span class="n">long_options</span><span class="p">[]</span> <span class="o">=</span>
+<span class="p">{</span>
+    <span class="p">{</span><span class="s">"add"</span><span class="p">,</span> <span class="n">required_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="sc">'a'</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">"append"</span><span class="p">,</span> <span class="n">no_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">"delete"</span><span class="p">,</span> <span class="n">required_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">"verbose"</span><span class="p">,</span> <span class="n">optional_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">"create"</span><span class="p">,</span> <span class="n">no_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">"file"</span><span class="p">,</span> <span class="n">required_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">"help"</span><span class="p">,</span> <span class="n">no_argument</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="kt">char</span> <span class="n">simple_options</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"a:bc::d:0123456789"</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+
+    <span class="kt">int</span> <span class="n">c</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">digit_optind</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">this_option_optind</span> <span class="o">=</span> <span class="n">optind</span> <span class="o">?</span> <span class="n">optind</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">longindex</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">getopt_long</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="n">simple_options</span><span class="p">,</span> <span class="n">long_options</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">longindex</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">break</span><span class="p">;</span>
+
+        <span class="k">switch</span> <span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// long option</span>
+            <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
+                   <span class="n">printf</span><span class="p">(</span><span class="s">"option %s"</span><span class="p">,</span> <span class="n">long_options</span><span class="p">[</span><span class="n">longindex</span><span class="p">].</span><span class="n">name</span><span class="p">);</span>
+                   <span class="k">if</span> <span class="p">(</span><span class="n">optarg</span><span class="p">)</span>
+                       <span class="n">printf</span><span class="p">(</span><span class="s">" with arg %s"</span><span class="p">,</span> <span class="n">optarg</span><span class="p">);</span>
+                   <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+                   <span class="k">break</span><span class="p">;</span>
+
+                <span class="k">break</span><span class="p">;</span>
+
+            <span class="k">case</span> <span class="sc">'0'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'1'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'2'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'3'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'4'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'5'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'6'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'7'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'8'</span><span class="p">:</span>
+            <span class="k">case</span> <span class="sc">'9'</span><span class="p">:</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">digit_optind</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">digit_optind</span> <span class="o">!=</span> <span class="n">this_option_optind</span><span class="p">)</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">"digits occur in two different argv-elements.</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+
+                <span class="n">digit_optind</span> <span class="o">=</span> <span class="n">this_option_optind</span><span class="p">;</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"option %c</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">c</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+
+            <span class="k">case</span> <span class="sc">'a'</span><span class="p">:</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"option a with value '%s'</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">optarg</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+
+            <span class="k">case</span> <span class="sc">'b'</span><span class="p">:</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"option b</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+
+            <span class="k">case</span> <span class="sc">'c'</span><span class="p">:</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">optarg</span><span class="p">)</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">"option c with value '%s'</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">optarg</span><span class="p">);</span>
+                <span class="k">else</span>
+                    <span class="n">printf</span><span class="p">(</span><span class="s">"option c</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+
+            <span class="k">case</span> <span class="sc">'?'</span><span class="p">:</span>
+                <span class="k">break</span><span class="p">;</span>
+
+            <span class="nl">default:</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">"?? getopt returned character code 0%o ??</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">c</span><span class="p">);</span>
+        <span class="p">}</span> <span class="c1">// switch</span>
+    <span class="p">}</span> <span class="c1">// while</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">optind</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"non-option ARGV-elements: "</span><span class="p">);</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">optind</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">)</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%s "</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="n">optind</span><span class="o">++</span><span class="p">]);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>我们来着重分析 <code class="language-plaintext highlighter-rouge">getopt_long</code> 的用法，<code class="language-plaintext highlighter-rouge">getopt_long</code> 的前三个参数跟 <code class="language-plaintext highlighter-rouge">getopt</code> 是一样的，分别是：命令行参数个数 <code class="language-plaintext highlighter-rouge">argc</code> ，命令行参数数组 <code class="language-plaintext highlighter-rouge">argv</code>，短参数具体形式 <code class="language-plaintext highlighter-rouge">optstring</code>。<code class="language-plaintext highlighter-rouge">otpstring</code> 的格式就是一个个的短参数字符，后面加冒号 <code class="language-plaintext highlighter-rouge">:</code> 表示带参数，两个冒号 <code class="language-plaintext highlighter-rouge">::</code> 表示可选参数，譬如第 19 行，就是声明短参数的形式，<code class="language-plaintext highlighter-rouge">b</code> 参数不带额外参数， <code class="language-plaintext highlighter-rouge">a</code> 参数带额外参数，<code class="language-plaintext highlighter-rouge">c</code> 带可选参数。</p>
+
+<p><code class="language-plaintext highlighter-rouge">getopt_long</code> 后两个参数是用来处理长参数的，其中 <code class="language-plaintext highlighter-rouge">option</code> 的结构是：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">option</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">;</span>       <span class="c1">// 长参数名字</span>
+    <span class="kt">int</span>         <span class="n">has_arg</span><span class="p">;</span>    <span class="c1">// 是否带额外参数</span>
+    <span class="kt">int</span>        <span class="o">*</span><span class="n">flag</span><span class="p">;</span>       <span class="c1">// 设置如何返回函数调用结果</span>
+    <span class="kt">int</span>         <span class="n">val</span><span class="p">;</span>        <span class="c1">// 返回的数值</span>
+<span class="p">};</span>
+</code></pre></div></div>
+<p>虽然说是长参数，但 <code class="language-plaintext highlighter-rouge">name</code> 还是可以设置为单字符长度的。</p>
+
+<p><code class="language-plaintext highlighter-rouge">has_arg</code> 可以设置为 <code class="language-plaintext highlighter-rouge">no_argument, required_argument, optional_argument</code>，分别表示不带参数，带参数，带可选参数。</p>
+
+<p><code class="language-plaintext highlighter-rouge">flag</code> 和 <code class="language-plaintext highlighter-rouge">val</code> 是配合使用的，如果 <code class="language-plaintext highlighter-rouge">flag = NULL</code>，<code class="language-plaintext highlighter-rouge">getopt_long</code> 会直接返回 <code class="language-plaintext highlighter-rouge">val</code> ，否则如果 <code class="language-plaintext highlighter-rouge">flag</code> 为有效指针，<code class="language-plaintext highlighter-rouge">getopt_long</code> 会执行类似 <code class="language-plaintext highlighter-rouge">*flag = val</code> 的操作，把 <code class="language-plaintext highlighter-rouge">flag</code> 指向的变量设置为 <code class="language-plaintext highlighter-rouge">val</code> 的数值。</p>
+
+<p>如果 <code class="language-plaintext highlighter-rouge">getopt_long</code> 找到匹配的短参数，会返回该短参数的字符值，如果找到匹配的长参数，会返回 <code class="language-plaintext highlighter-rouge">val</code>（ <code class="language-plaintext highlighter-rouge">flag = NULL</code> ）或者返回 <code class="language-plaintext highlighter-rouge">0</code> （ <code class="language-plaintext highlighter-rouge">flag != NULL; *flag = val;</code> ）；如果遇到非参数的字符，会返回 <code class="language-plaintext highlighter-rouge">?</code>；如果所有参数都处理完毕，则返回 <code class="language-plaintext highlighter-rouge">-1</code> 。</p>
+
+<p>利用返回值的特性，我们可以做出用长参跟短参含义相同的效果，譬如 <code class="language-plaintext highlighter-rouge">long_options</code> 的第一个参数 <code class="language-plaintext highlighter-rouge">add</code>，其 <code class="language-plaintext highlighter-rouge">val</code> 值设置为短参数的字符 <code class="language-plaintext highlighter-rouge">'a'</code>，那么判断返回时，<code class="language-plaintext highlighter-rouge">--add</code> 和 <code class="language-plaintext highlighter-rouge">-a</code> 会进入相同的处理分支，被当作相同的含义来处理了。</p>
+
+<p>拼图的最后一块就是 <code class="language-plaintext highlighter-rouge">optind</code> 和 <code class="language-plaintext highlighter-rouge">optarg</code> 的用法，<code class="language-plaintext highlighter-rouge">optind</code> 是下一个待处理参数在 <code class="language-plaintext highlighter-rouge">argv</code> 中的位置， <code class="language-plaintext highlighter-rouge">optarg</code> 则指向额外参数字符串。</p>
+
+<p>编译运行代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ .\getopt_test -a 1 -b -c4 --add 2 --verbose --verbose=3 -123 -e --e
+option a with value '1'
+option b
+option c with value '4'
+option a with value '2'
+option verbose
+option verbose with arg 3
+option 1
+option 2
+option 3
+.\getopt_test: invalid option -- e
+.\getopt_test: unrecognized option `--e'
+
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">-a</code> 和 <code class="language-plaintext highlighter-rouge">--add</code> 的含义相同，短参数的可选参数直接跟在后面，譬如 <code class="language-plaintext highlighter-rouge">-c4</code>，而长参数的可选参数需要有等号，譬如 <code class="language-plaintext highlighter-rouge">--verbose=3</code>。</p>
+
+<h2 id="mobuleparam">mobuleparam</h2>
+
+<p>ok，终于来到最初引发这篇文章的方法，Linux 内核用了一种很取巧的方法来给内核模块传递参数，这个方法就是 <code class="language-plaintext highlighter-rouge">moduleparam</code> 。我在这里先简单解释 Linux 内核的 <code class="language-plaintext highlighter-rouge">moduleparam</code> 的做法，更详细的解释可以去看代码。虽然我借鉴了一些 <code class="language-plaintext highlighter-rouge">moduleparam</code> 的处理方法，但和 Linux 内核的 <code class="language-plaintext highlighter-rouge">moduleparam</code> 有一些不同，为了区分，我会把我的方法叫做 <code class="language-plaintext highlighter-rouge">small moduleparam</code> ， Linux 内核的依然叫做 <code class="language-plaintext highlighter-rouge">moduleparam</code> 。</p>
+
+<p>先来看看 <code class="language-plaintext highlighter-rouge">moduleparam</code> 的用法，在模块里面声明：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">enable_debug</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">module_param</span><span class="p">(</span><span class="n">enable_debug</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>然后加载模块时输入参数：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>insmod mod <span class="nv">enable_debug</span><span class="o">=</span>1
+</code></pre></div></div>
+
+<p>变量 <code class="language-plaintext highlighter-rouge">enable_debug</code> 就被正确地设置为 <code class="language-plaintext highlighter-rouge">1</code>，使用起来很方便，需要增加的代码也很少，代码可以写得很简短优雅，不用像 <code class="language-plaintext highlighter-rouge">getenv</code> 和 <code class="language-plaintext highlighter-rouge">getopt</code> 那样写很多循环判断，而且还自带类型转换，所以我看到就想，要是能把这个方法拿来处理命令行参数，那就更好了。</p>
+
+<p>接着来看看 <code class="language-plaintext highlighter-rouge">moduleparam</code> 的核心实现：</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+</pre></td><td class="code"><pre><span class="k">struct</span> <span class="nc">kernel_param</span> <span class="p">{</span>
+	<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">;</span>           <span class="c1">// 变量名字</span>
+	<span class="n">u16</span> <span class="n">perm</span><span class="p">;</span>                   <span class="c1">// 变量访问权限</span>
+	<span class="n">u16</span> <span class="n">flags</span><span class="p">;</span>                  <span class="c1">// 变量是否 bool 类型</span>
+	<span class="n">param_set_fn</span> <span class="n">set</span><span class="p">;</span>           <span class="c1">// str -&gt; 变量值</span>
+	<span class="n">param_get_fn</span> <span class="n">get</span><span class="p">;</span>           <span class="c1">// 变量值 -&gt; str</span>
+	<span class="k">union</span> <span class="p">{</span>
+		<span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">;</span>              <span class="c1">// 变量指针</span>
+		<span class="k">const</span> <span class="k">struct</span> <span class="nc">kparam_string</span> <span class="o">*</span><span class="n">str</span><span class="p">;</span>
+		<span class="k">const</span> <span class="k">struct</span> <span class="nc">kparam_array</span> <span class="o">*</span><span class="n">arr</span><span class="p">;</span>
+	<span class="p">};</span>
+<span class="p">};</span>
+
+<span class="cp">#define __module_param_call(prefix, name, set, get, arg, isbool, perm)	\
+	</span><span class="cm">/* Default value instead of permissions? */</span><span class="cp">			\
+	static int __param_perm_check_##name __attribute__((unused)) =	\
+	BUILD_BUG_ON_ZERO((perm) &lt; 0 || (perm) &gt; 0777 || ((perm) &amp; 2))	\
+	+ BUILD_BUG_ON_ZERO(sizeof(""prefix) &gt; MAX_PARAM_PREFIX_LEN);	\
+	static const char __param_str_##name[] = prefix #name;		\
+	static struct kernel_param __moduleparam_const __param_##name	\
+	__used								\
+        __attribute__ ((unused,__section__ ("__param"),aligned(sizeof(void *)))) \
+	= { __param_str_##name, perm, isbool ? KPARAM_ISBOOL : 0,	\
+	    set, get, { arg } }
+</span>
+<span class="cp">#define module_param_call(name, set, get, arg, perm)			      \
+	__module_param_call(MODULE_PARAM_PREFIX,			      \
+			    name, set, get, arg,			      \
+			    __same_type(*(arg), bool), perm)
+</span>
+<span class="cp">#define module_param_named(name, value, type, perm)			   \
+	param_check_##type(name, &amp;(value));				   \
+	module_param_call(name, param_set_##type, param_get_##type, &amp;value, perm); \
+	__MODULE_PARM_TYPE(name, #type)
+</span>
+<span class="cp">#define module_param(name, type, perm)				\
+	module_param_named(name, name, type, perm)</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p><code class="language-plaintext highlighter-rouge">module_param</code> 是一个宏，它实际做的事情是建立了一个可以反射到传入变量的结构 <code class="language-plaintext highlighter-rouge">kernel_param</code> ，该结构保存了足够访问和设置变量的信息，即第 20-24 行，并且把结构放在叫做 <code class="language-plaintext highlighter-rouge">__param</code> 的 <code class="language-plaintext highlighter-rouge">section</code> 中（ <code class="language-plaintext highlighter-rouge">__section__ ("__param")</code> ）。结构保存好之后，内核会在加载模块时，找出 elf 文件的 <code class="language-plaintext highlighter-rouge">section __param</code> 的位置和结构数量，在根据名字和 <code class="language-plaintext highlighter-rouge">param_set_fn</code> 分别设置每个参数的数值。找出特定名字 <code class="language-plaintext highlighter-rouge">section</code> 的方法是平台相关的，Linux 内核实现的是对 elf 文件的处理，Linux 提供了指令 <code class="language-plaintext highlighter-rouge">readelf</code> 来查看 elf 文件的信息，有兴趣的可以查看 <code class="language-plaintext highlighter-rouge">readelf</code> 的帮助信息。</p>
+
+<p>上面说道 Linux 内核的做法是平台相关的，而我想要的平台无关的处理参数的方法，所以我们就要改一改原始的 <code class="language-plaintext highlighter-rouge">moduleparam</code> 的做法，把 <code class="language-plaintext highlighter-rouge">__section__ ("__param")</code> 声明去掉，毕竟我们并不像去很麻烦地读取 elf 文件的 <code class="language-plaintext highlighter-rouge">section</code> 。先来看看修改后的用法：</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+</pre></td><td class="code"><pre><span class="cp">#include</span> <span class="cpf">"moduleparam.h"</span><span class="cp">
+#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span>
+<span class="k">static</span> <span class="kt">int</span> <span class="n">test</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="n">btest</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">static</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">latest_num</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">static</span> <span class="kt">long</span> <span class="n">latest</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="k">static</span> <span class="kt">char</span> <span class="n">strtest</span><span class="p">[</span><span class="mi">20</span><span class="p">]</span> <span class="o">=</span> <span class="s">"</span><span class="se">\0</span><span class="s">"</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">usage</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">msg</span> <span class="o">=</span> <span class="s">"usage: moduleparam_test [test=int] [btest[=bool]] [latest=int array] [strtest=string]</span><span class="se">\n</span><span class="s">"</span><span class="p">;</span>
+    <span class="n">printf</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">unknown_handler</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">param</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">val</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"find unknown param: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">param</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">init_module_param</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+    <span class="n">module_param</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="kt">int</span><span class="p">);</span>
+    <span class="n">module_param_bool</span><span class="p">(</span><span class="n">btest</span><span class="p">);</span>
+    <span class="n">module_param_array</span><span class="p">(</span><span class="n">latest</span><span class="p">,</span> <span class="kt">long</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">latest_num</span><span class="p">);</span>
+    <span class="n">module_param_string</span><span class="p">(</span><span class="n">strtest</span><span class="p">,</span> <span class="n">strtest</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">strtest</span><span class="p">));</span>
+
+    <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">parse_params</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="n">unknown_handler</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">ret</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">usage</span><span class="p">();</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">MODULE_INIT_VARIABLE_NUM</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">MODULE_INIT_VARIABLE</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">get</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MODULE_INIT_VARIABLE</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%s = %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">MODULE_INIT_VARIABLE</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">name</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>那么为了保存每一个反射的结构，我就增加了一个宏 <code class="language-plaintext highlighter-rouge">init_module_param(num)</code> ，来声明保存结构的空间， <code class="language-plaintext highlighter-rouge">num</code> 是参数的个数，如果实际声明的参数个数超出 <code class="language-plaintext highlighter-rouge">num</code> ，程序会触发断言错误。<code class="language-plaintext highlighter-rouge">module_param</code> 的声明跟原始的稍有不同，去掉了最后一个表示访问权限的参数，不做权限的控制。另外新增了宏 <code class="language-plaintext highlighter-rouge">module_param_bool</code> 来处理表示 <code class="language-plaintext highlighter-rouge">bool</code> 的变量，这在 Linux 的版本是不需要的，因为它用到了 gcc 内建函数 <code class="language-plaintext highlighter-rouge">__builtin_types_compatible_p</code> 来判断变量的类型，很遗憾，MSVC 是没有这个函数的，所以我只能把这个功能去掉，增加一个宏。 <code class="language-plaintext highlighter-rouge">module_param_array</code> 和 <code class="language-plaintext highlighter-rouge">module_param_string</code> 就是对数组和字符串的处理，这两个功能在原始的版本也是有的。</p>
+
+<p>声明参数完毕，就是处理传入的参数了，使用宏 <code class="language-plaintext highlighter-rouge">parse_params</code> ，传入 <code class="language-plaintext highlighter-rouge">argc, argv</code>，第 3 个参数是对未知参数的处理回调函数指针，可以传 <code class="language-plaintext highlighter-rouge">NULL</code> ，则入到位置参数会中断处理参数，返回错误码。</p>
+
+<p>编译运行代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.\moduleparam_test.exe error=0 test=101 btest=1 latest=1,2,3 strtest=\"Hello World!\"
+Parsing ARGS: error=0 test=101 btest=1 latest=1,2,3 strtest="Hello World!"
+find unknown param: error
+test = 101
+btest = Y
+latest = 1,2,3
+strtest = Hello World!
+</code></pre></div></div>
+
+<p>可以看到数值，数组和字符串都能正确读入并转换格式，如果遇到不能转换格式的参数，会返回错误码并打印相关信息。我们可以很简单地添加几行代码，就完成参数的读入和转换处理，用起来很优雅。更详细实现可以直接看代码，<a href="https://github.com/disenone/aparsing">在这里</a>。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>这次我们总结了一下 C/C++ 下三种处理命令行参数的方法，分别是 <code class="language-plaintext highlighter-rouge">getenv</code> ，<code class="language-plaintext highlighter-rouge">getopt</code> 和 <code class="language-plaintext highlighter-rouge">moduleparam</code>。三种方法有各自的特点，以后有需要可以根据实际的需求来选择合适的方法：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">getenv</code> 是原生多平台就支持的，可以直接使用，但也过于原始，并使用的是环境变量，对环境有一定的污染，每次使用前最好清除不必要的环境变量防止上次的设置存留污染</li>
+  <li><code class="language-plaintext highlighter-rouge">getopt</code> 是 Linux 平台原生支持的，Windows 不支持，所以需要包含实现的代码才能跨平台使用。参数的传递符合 Linux 的命令传参标准，支持可选参数，但使用起来略微麻烦，通常需要循环和条件判断来处理不同的参数，并对数值类型的参数不友好。</li>
+  <li><code class="language-plaintext highlighter-rouge">moduleparam</code> 是参考 Linux 内核的 <code class="language-plaintext highlighter-rouge">moduleparam</code> 实现的命令行参数处理工具，支持跨平台使用，使用简单，能对不同类型的参数进行类型转换，缺点就是每个参数都需要一个相应的变量存储。</li>
+</ul>
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> C/C++ 的命令行参数处理总结 </a>。
+                </p>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2016/06/11/memory-leak-detector" data-toggle="tooltip" data-placement="top" title="编写 Windows 下的 Memory Leak Detector">
+                            前一篇<br>
+                            <span>编写 Windows 下的 Memory Leak Detector</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2019/12/17/kcp" data-toggle="tooltip" data-placement="top" title="KCP 源码剖析">
+                            后一篇<br>
+                            <span>KCP 源码剖析</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br/><br/>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2016/11/19/aparsing>" class="leancloud_visitors" data-flag-title="C/C++ 的命令行参数处理总结">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="og:title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+</body>
+
+</html>

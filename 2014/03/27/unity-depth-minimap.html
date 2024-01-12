@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>Unity画深度图(Depth Map)和边缘检测(Edge Detection) - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/2014/03/27/unity-depth-minimap">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="English" href="/en/2014/03/27/unity-depth-minimap">
+                            
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/Tags/#dev" title="dev">dev</a>
+                        
+                    </div>
+                    <h1>Unity画深度图(Depth Map)和边缘检测(Edge Detection)</h1>
+                    
+                    <span class="meta">Posted by Disenone on March 27, 2014</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> Unity画深度图(Depth Map)和边缘检测(Edge Detection) </a>。
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="Unity画深度图(Depth Map)和边缘检测(Edge Detection)" />
+
+<p>刚接触Unity没多久，对Unity的ShaderLab一直很感兴趣，感觉它可以快速地实现各种各样的显示效果，很有意思。嘛，作为一个门都还没入的人，我就来搞一搞深度图和边缘检测吧。</p>
+
+<h1 id="小地图设置">小地图设置</h1>
+
+<p>因为我只是做了一个小雏形，所以我不打算详细地讲如何去在场景上画小地图，大致上说我做了以下一些事情：</p>
+
+<ol>
+  <li>获取场景的 bounding box，这个在设置相机的参数和位置时有用</li>
+  <li>把小地图相机配置成正交投影，根据 bounding box 设置相机的近平面和远平面</li>
+  <li>为该相机增加一个人物目标，目标会显示在地图的中心</li>
+  <li>每次更新相机的位置，根据目标的位置，还有场景的最大 y 值</li>
+</ol>
+
+<p>具体的配置可以参考后面给出的代码。</p>
+
+<p>#获取深度图</p>
+
+<p>##depthTextureMode 来获取深度图</p>
+
+<p>相机自己可以保存DepthBuffer或者一个DepthNormalBuffer(可用来做边缘检测)，只需要设置</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Camera</span><span class="p">.</span><span class="n">depthTextureMode</span> <span class="p">=</span> <span class="n">DepthTextureMode</span><span class="p">.</span><span class="n">DepthNormals</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>然后在Shader里面引用</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sampler2D</span> <span class="n">_CameraDepthNormalsTexture</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>就可以了，具体的做法可以参考我后面给出的代码。关于在Z-Buffer里面保存的深度值跟真实世界的深度的关系可以参考这两篇文章：
+<a href="http://www.sjbaker.org/steve/omniv/love_your_z_buffer.html">Learning to Love your Z-buffer</a>,<a href="http://www.humus.name/temp/Linearize%20depth.txt">Linearize depth</a>。另外 Unity 也提供了一些函数来计算深度: <code class="language-plaintext highlighter-rouge">Linear01Depth</code>, <code class="language-plaintext highlighter-rouge">LinearEyeDepth</code> 等。</p>
+
+<p>这不是我这里讨论的重点，我想说的是，本来我的相机设置为正交投影，深度应该是线性的，但我测试出来却不是线性。然后我用上面链接介绍的方法来计算真实世界的深度，也一直都不正确，以至于一直计算不出真实的线性深度，不知道是Unity的Z_Buffer的问题还是什么，那位朋友知道的请教教我。当然，如果不需要真实的深度值，单单是比较深度的大小之类的，用上面的方法就足够了，而且很简单。但是对于我这里来说，我想要把真实深度映射为颜色值，需要获得真实的线性的深度值（虽然也是[0, 1]），我只好用另外一种用 RenderWithShader 方法了。</p>
+
+<h2 id="renderwithshader-来获取深度图">RenderWithShader 来获取深度图</h2>
+
+<p>这种方法其实就是用Unity Reference里面的一个例子：<a href="http://docs.unity3d.com/Documentation/Components/SL-ShaderReplacement.html">Rendering with Replaced Shaders</a>。需要理解的是，<code class="language-plaintext highlighter-rouge">RenderWithShader</code>会把场景中的相应的Mesh画一遍。</p>
+
+<p>创建一个 Shader :</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Shader</span> <span class="s">"Custom/DepthByReplaceShader"</span> 
+<span class="p">{</span>
+<span class="n">SubShader</span> 
+<span class="p">{</span>
+    <span class="n">Tags</span> <span class="p">{</span> <span class="s">"RenderType"</span><span class="o">=</span><span class="s">"Opaque"</span> <span class="p">}</span>
+    <span class="n">Pass</span> <span class="p">{</span>
+        <span class="n">Fog</span> <span class="p">{</span> <span class="n">Mode</span> <span class="n">Off</span> <span class="p">}</span>
+		<span class="n">CGPROGRAM</span>
+		<span class="cp">#pragma vertex vert
+</span>		<span class="cp">#pragma fragment frag
+</span>		<span class="cp">#include</span> <span class="cpf">"UnityCG.cginc"</span><span class="cp">
+</span>
+		<span class="k">struct</span> <span class="n">v2f</span> <span class="p">{</span>
+		    <span class="n">float4</span> <span class="n">pos</span> <span class="o">:</span> <span class="n">SV_POSITION</span><span class="p">;</span>
+		    <span class="n">float2</span> <span class="n">depth</span> <span class="o">:</span> <span class="n">TEXCOORD0</span><span class="p">;</span>
+		<span class="p">};</span>
+
+		<span class="n">v2f</span> <span class="n">vert</span> <span class="p">(</span><span class="n">appdata_base</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+		    <span class="n">v2f</span> <span class="n">o</span><span class="p">;</span>
+		    <span class="n">o</span><span class="p">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">UNITY_MATRIX_MVP</span><span class="p">,</span> <span class="n">v</span><span class="p">.</span><span class="n">vertex</span><span class="p">);</span>
+		    <span class="n">UNITY_TRANSFER_DEPTH</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">depth</span><span class="p">);</span>
+		    <span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+		<span class="p">}</span>
+
+		<span class="n">float4</span> <span class="n">frag</span><span class="p">(</span><span class="n">v2f</span> <span class="n">i</span><span class="p">)</span> <span class="o">:</span> <span class="n">COLOR</span> <span class="p">{</span>
+		    <span class="c1">//UNITY_OUTPUT_DEPTH(i.depth);</span>
+		    <span class="kt">float</span> <span class="n">d</span> <span class="o">=</span> <span class="n">i</span><span class="p">.</span><span class="n">depth</span><span class="p">.</span><span class="n">x</span><span class="o">/</span><span class="n">i</span><span class="p">.</span><span class="n">depth</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+		    <span class="k">return</span> <span class="n">float4</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+		<span class="p">}</span>
+		<span class="n">ENDCG</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>为你的小地图相机(没有的话创建之)添加一个脚本，把相机配置成正交投影等，并且在 <code class="language-plaintext highlighter-rouge">Update()</code> 里面使用这个 Shader 来渲染场景：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">camera</span><span class="p">.</span><span class="n">targetTexture</span> <span class="p">=</span> <span class="n">depthTexture</span><span class="p">;</span>
+<span class="n">camera</span><span class="p">.</span><span class="nf">RenderWithShader</span><span class="p">(</span><span class="n">depthShader</span><span class="p">,</span> <span class="s">""</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>渲染的结果就会保存在 <code class="language-plaintext highlighter-rouge">depthTexture</code>里面，很简单吧。</p>
+
+<h2 id="把深度映射成颜色">把深度映射成颜色</h2>
+<p>要完成这个工作，首先需要一张颜色图，这张图可以用 Matlab 很简单地生成，例如我用的是 Matlab 里面的 jet 图：</p>
+
+<p><img src="/assets/post_assets/2014-3-27-unity-depth-minimap/jet.png" width="200" alt="jet color map" title="jet" align="" /></p>
+
+<p>把这张图放到项目目录 <code class="language-plaintext highlighter-rouge">Assets\Resources</code> 里面，就可以在程序中读取：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">colorMap</span> <span class="p">=</span> <span class="n">Resources</span><span class="p">.</span><span class="n">Load</span><span class="p">&lt;</span><span class="n">Texture2D</span><span class="p">&gt;(</span><span class="s">"colormap"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>需要注意的是，这张图片的 <code class="language-plaintext highlighter-rouge">Wrap Mode</code> 应该是 <code class="language-plaintext highlighter-rouge">Clamp</code>，防止在两边缘的颜色值之间进行插值。</p>
+
+<p>之后就需要使用 <code class="language-plaintext highlighter-rouge">OnRenderImage</code> 和 <code class="language-plaintext highlighter-rouge">Graphics.Blit</code> 函数，函数的原型为：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">void</span> <span class="nf">OnRenderImage</span><span class="p">(</span><span class="n">RenderTexture</span> <span class="n">src</span><span class="p">,</span> <span class="n">RenderTexture</span> <span class="n">dst</span><span class="p">);</span>
+<span class="k">static</span> <span class="k">void</span> <span class="nf">Blit</span><span class="p">(</span><span class="n">Texture</span> <span class="n">source</span><span class="p">,</span> <span class="n">RenderTexture</span> <span class="n">dest</span><span class="p">,</span> <span class="n">Material</span> <span class="n">mat</span><span class="p">,</span> <span class="kt">int</span> <span class="n">pass</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这个函数的 src 是相机渲染的结果，dst 是处理后传回给相机的结果，因此这个函数通常是用来在相机渲染完成后做图片的一些效果，例如我们这里的对深度做颜色映射，还有边缘检测。做法就是在<code class="language-plaintext highlighter-rouge">OnRenderImage</code>中调用<code class="language-plaintext highlighter-rouge">Graphics.Blit</code>，传入特定的<code class="language-plaintext highlighter-rouge">Material</code>：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">depthEdgeMaterial</span><span class="p">.</span><span class="nf">SetTexture</span><span class="p">(</span><span class="s">"_DepthTex"</span><span class="p">,</span> <span class="n">src</span><span class="p">);</span>
+<span class="n">Graphics</span><span class="p">.</span><span class="nf">Blit</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">depthEdgeMaterial</span><span class="p">);</span>
+<span class="k">return</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>需要注意的是，<code class="language-plaintext highlighter-rouge">Graphics.Blit</code>实际上做了这样一件事情：在相机前面画一个跟屏幕大小一样的平面，把<code class="language-plaintext highlighter-rouge">src</code>作为这个平面的<code class="language-plaintext highlighter-rouge">_MainTex</code>传进<code class="language-plaintext highlighter-rouge">Shader</code>中，然后把结果放到<code class="language-plaintext highlighter-rouge">dst</code>里面，而不是把实际场景中的Mesh重新画一遍。</p>
+
+<p>对颜色映射其实就是把深度 [0, 1] 看成图片的 uv，因为我想距离相机近的为红色，所以我对深度取了反：</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">half4</span> <span class="n">color</span> <span class="o">=</span> <span class="n">tex2D</span><span class="p">(</span><span class="n">_ColorMap</span><span class="p">,</span> <span class="n">float2</span><span class="p">(</span><span class="n">saturate</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">depth</span><span class="p">),</span> <span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">));</span>
+</code></pre></div></div>
+
+<h1 id="边缘检测">边缘检测</h1>
+<p>边缘检测需要用到了相机自己的 <code class="language-plaintext highlighter-rouge">_CameraDepthNormalsTexture</code>，主要是用 Normal 的值，深度还是用之前计算出来的。在 <code class="language-plaintext highlighter-rouge">_CameraDepthNormalsTexture</code> 的每个像素 (x, y, z, w) 中，(x, y) 是法向，(z, w)是深度，法向是用了一种方法来存放的，有兴趣可以自己搜索。</p>
+
+<p>代码是参考了 Unity 自带的 Image Effect 里面的边缘检测，需要做的事情就是，比较当前像素的法向深度和邻近像素的差别，足够大我们就认为存在边缘：</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">inline</span> <span class="n">half</span> <span class="nf">CheckSame</span> <span class="p">(</span><span class="n">half2</span> <span class="n">centerNormal</span><span class="p">,</span> <span class="n">half2</span> <span class="n">sampleNormal</span><span class="p">,</span> <span class="kt">float</span> <span class="n">centerDepth</span><span class="p">,</span> <span class="kt">float</span> <span class="n">sampleDepth</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="c1">// difference in normals</span>
+	<span class="c1">// do not bother decoding normals - there's no need here</span>
+	<span class="n">half2</span> <span class="n">diff</span> <span class="p">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">centerNormal</span> <span class="p">-</span> <span class="n">sampleNormal</span><span class="p">);</span>
+	<span class="n">half</span> <span class="n">isSameNormal</span> <span class="p">=</span> <span class="p">(</span><span class="n">diff</span><span class="p">.</span><span class="n">x</span> <span class="p">+</span> <span class="n">diff</span><span class="p">.</span><span class="n">y</span><span class="p">)</span> <span class="p">&lt;</span> <span class="m">0.5</span><span class="p">;</span>
+	
+	<span class="c1">// difference in depth</span>
+	<span class="kt">float</span> <span class="n">zdiff</span> <span class="p">=</span> <span class="nf">abs</span><span class="p">(</span><span class="n">centerDepth</span><span class="p">-</span><span class="n">sampleDepth</span><span class="p">);</span>
+	<span class="c1">// scale the required threshold by the distance</span>
+	<span class="n">half</span> <span class="n">isSameDepth</span> <span class="p">=</span> <span class="p">(</span><span class="n">zdiff</span> <span class="p">&lt;</span> <span class="m">0.09</span> <span class="p">*</span> <span class="n">centerDepth</span><span class="p">)</span> <span class="p">||</span> <span class="p">(</span><span class="n">centerDepth</span> <span class="p">&lt;</span> <span class="m">0.1</span><span class="p">);</span>
+	
+	<span class="c1">// return:</span>
+	<span class="c1">// 1 - if normals and depth are similar enough</span>
+	<span class="c1">// 0 - otherwise</span>
+	<span class="k">return</span> <span class="n">isSameNormal</span> <span class="p">*</span> <span class="n">isSameDepth</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>完整的 Shader 如下：</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Shader</span> <span class="s">"Custom/DepthColorEdge"</span> <span class="p">{</span>
+
+<span class="n">Properties</span> 
+<span class="p">{</span>
+	<span class="n">_DepthTex</span> <span class="p">(</span><span class="s">"Depth Tex"</span><span class="p">,</span> <span class="mi">2</span><span class="n">D</span><span class="p">)</span> <span class="o">=</span> <span class="s">"white"</span> <span class="p">{}</span>
+	<span class="n">_ColorMap</span> <span class="p">(</span><span class="s">"Color Map"</span><span class="p">,</span> <span class="mi">2</span><span class="n">D</span><span class="p">)</span> <span class="o">=</span> <span class="s">"white"</span> <span class="p">{}</span>
+<span class="p">}</span>
+	<span class="n">SubShader</span> 
+	<span class="p">{</span>
+		<span class="n">Tags</span> <span class="p">{</span> <span class="s">"RenderType"</span><span class="o">=</span><span class="s">"Opaque"</span> <span class="p">}</span>
+		<span class="n">LOD</span> <span class="mi">200</span>
+		<span class="n">Pass</span>
+		<span class="p">{</span>
+			<span class="n">ZTest</span> <span class="n">Always</span> <span class="n">Cull</span> <span class="n">Off</span> <span class="n">ZWrite</span> <span class="n">Off</span>
+			<span class="n">Fog</span> <span class="p">{</span> <span class="n">Mode</span> <span class="n">off</span> <span class="p">}</span>
+			<span class="n">CGPROGRAM</span>
+			<span class="cp">#pragma vertex vert
+</span>			<span class="cp">#pragma fragment frag
+</span>			<span class="cp">#include</span> <span class="cpf">"UnityCG.cginc"</span><span class="cp">
+</span>			<span class="kt">sampler2D</span> <span class="n">_CameraDepthNormalsTexture</span><span class="p">;</span>
+			<span class="kt">sampler2D</span> <span class="n">_DepthTex</span><span class="p">;</span>
+			<span class="k">uniform</span> <span class="n">float4</span> <span class="n">_DepthTex_TexelSize</span><span class="p">;</span>
+			<span class="kt">sampler2D</span> <span class="n">_ColorMap</span><span class="p">;</span>
+			<span class="kt">float</span> <span class="n">_ZNear</span><span class="p">;</span>
+			<span class="kt">float</span> <span class="n">_ZFar</span><span class="p">;</span>
+			
+			<span class="k">struct</span> <span class="n">v2f</span> 
+			<span class="p">{</span>
+			    <span class="n">float4</span> <span class="n">pos</span> <span class="o">:</span> <span class="n">SV_POSITION</span><span class="p">;</span>
+			    <span class="n">float2</span> <span class="n">uv</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">:</span> <span class="n">TEXCOORD0</span><span class="p">;</span>
+			<span class="p">};</span>
+
+			<span class="n">v2f</span> <span class="n">vert</span> <span class="p">(</span><span class="n">appdata_base</span> <span class="n">v</span><span class="p">)</span>
+			<span class="p">{</span>
+			    <span class="n">v2f</span> <span class="n">o</span><span class="p">;</span>
+			    <span class="n">o</span><span class="p">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">UNITY_MATRIX_MVP</span><span class="p">,</span> <span class="n">v</span><span class="p">.</span><span class="n">vertex</span><span class="p">);</span>
+			    <span class="n">o</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">MultiplyUV</span><span class="p">(</span> <span class="n">UNITY_MATRIX_TEXTURE0</span><span class="p">,</span> <span class="n">v</span><span class="p">.</span><span class="n">texcoord</span> <span class="p">);</span>
+			    <span class="n">o</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">o</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="o">-</span><span class="n">_DepthTex_TexelSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="n">_DepthTex_TexelSize</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+			    <span class="n">o</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">o</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">float2</span><span class="p">(</span><span class="o">+</span><span class="n">_DepthTex_TexelSize</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="n">_DepthTex_TexelSize</span><span class="p">.</span><span class="n">y</span><span class="p">);</span>
+			    <span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+			<span class="p">}</span>
+
+
+			<span class="kr">inline</span> <span class="kr">half</span> <span class="n">CheckSame</span> <span class="p">(</span><span class="n">half2</span> <span class="n">centerNormal</span><span class="p">,</span> <span class="n">half2</span> <span class="n">sampleNormal</span><span class="p">,</span> <span class="kt">float</span> <span class="n">centerDepth</span><span class="p">,</span> <span class="kt">float</span> <span class="n">sampleDepth</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="c1">// difference in normals</span>
+				<span class="c1">// do not bother decoding normals - there's no need here</span>
+				<span class="n">half2</span> <span class="n">diff</span> <span class="o">=</span> <span class="n">abs</span><span class="p">(</span><span class="n">centerNormal</span> <span class="o">-</span> <span class="n">sampleNormal</span><span class="p">);</span>
+				<span class="kr">half</span> <span class="n">isSameNormal</span> <span class="o">=</span> <span class="p">(</span><span class="n">diff</span><span class="p">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">diff</span><span class="p">.</span><span class="n">y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">;</span>
+				
+				<span class="c1">// difference in depth</span>
+				<span class="kt">float</span> <span class="n">zdiff</span> <span class="o">=</span> <span class="n">abs</span><span class="p">(</span><span class="n">centerDepth</span><span class="o">-</span><span class="n">sampleDepth</span><span class="p">);</span>
+				<span class="c1">// scale the required threshold by the distance</span>
+				<span class="kr">half</span> <span class="n">isSameDepth</span> <span class="o">=</span> <span class="p">(</span><span class="n">zdiff</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">.</span><span class="mi">09</span> <span class="o">*</span> <span class="n">centerDepth</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">centerDepth</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">.</span><span class="mi">1</span><span class="p">);</span>
+				
+				<span class="c1">// return:</span>
+				<span class="c1">// 1 - if normals and depth are similar enough</span>
+				<span class="c1">// 0 - otherwise</span>
+				<span class="k">return</span> <span class="n">isSameNormal</span> <span class="o">*</span> <span class="n">isSameDepth</span><span class="p">;</span>
+			<span class="p">}</span>
+
+			<span class="n">half4</span> <span class="n">frag</span><span class="p">(</span><span class="n">v2f</span> <span class="n">i</span><span class="p">)</span> <span class="o">:</span> <span class="n">COLOR</span> 
+			<span class="p">{</span>
+				<span class="c1">// get color based on depth</span>
+			    <span class="kt">float</span> <span class="n">depth</span> <span class="o">=</span> <span class="n">tex2D</span> <span class="p">(</span><span class="n">_DepthTex</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">0</span><span class="p">]).</span><span class="n">r</span><span class="p">;</span>
+			    <span class="n">half4</span> <span class="n">color</span> <span class="o">=</span> <span class="n">tex2D</span><span class="p">(</span><span class="n">_ColorMap</span><span class="p">,</span> <span class="n">float2</span><span class="p">(</span><span class="n">saturate</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">depth</span><span class="p">),</span> <span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">));</span>
+			    
+			    <span class="c1">// detect normal diff</span>
+			    <span class="n">half2</span> <span class="n">centerNormal</span> <span class="o">=</span> <span class="n">tex2D</span><span class="p">(</span><span class="n">_CameraDepthNormalsTexture</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">0</span><span class="p">]).</span><span class="n">xy</span><span class="p">;</span>
+			    <span class="n">half2</span> <span class="n">sampleNormal1</span> <span class="o">=</span> <span class="n">tex2D</span> <span class="p">(</span><span class="n">_CameraDepthNormalsTexture</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">1</span><span class="p">]).</span><span class="n">xy</span><span class="p">;</span>
+				<span class="n">half2</span> <span class="n">sampleNormal2</span> <span class="o">=</span> <span class="n">tex2D</span> <span class="p">(</span><span class="n">_CameraDepthNormalsTexture</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">2</span><span class="p">]).</span><span class="n">xy</span><span class="p">;</span>
+				<span class="kt">float</span> <span class="n">sampleDepth1</span> <span class="o">=</span> <span class="n">tex2D</span> <span class="p">(</span><span class="n">_DepthTex</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">1</span><span class="p">]).</span><span class="n">r</span><span class="p">;</span>
+				<span class="kt">float</span> <span class="n">sampleDepth2</span> <span class="o">=</span> <span class="n">tex2D</span> <span class="p">(</span><span class="n">_DepthTex</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="n">uv</span><span class="p">[</span><span class="mi">2</span><span class="p">]).</span><span class="n">r</span><span class="p">;</span>
+				<span class="n">color</span> <span class="o">*=</span> <span class="n">CheckSame</span><span class="p">(</span><span class="n">centerNormal</span><span class="p">,</span> <span class="n">sampleNormal1</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">sampleDepth1</span><span class="p">);</span>
+				<span class="n">color</span> <span class="o">*=</span> <span class="n">CheckSame</span><span class="p">(</span><span class="n">centerNormal</span><span class="p">,</span> <span class="n">sampleNormal2</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">sampleDepth2</span><span class="p">);</span>
+
+			    <span class="k">return</span> <span class="n">color</span><span class="p">;</span>
+			<span class="p">}</span>
+			<span class="n">ENDCG</span>
+		<span class="p">}</span>
+
+	<span class="p">}</span>
+	<span class="n">FallBack</span> <span class="s">"Diffuse"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>结果类似于这个：</p>
+
+<p><img src="/assets/post_assets/2014-3-27-unity-depth-minimap/topview.png" width="200" alt="depth color" title="depth color" align="" /></p>
+
+<h1 id="混合真实世界图像">混合真实世界图像</h1>
+<p>单单是深度的颜色图可能有点无趣，那么我们可以混合上真实场景的颜色图，只需要再建一个 Shader，传入前面的图像和相机的真实图像，在 <code class="language-plaintext highlighter-rouge">OnRenderImage</code> 中进行混合：</p>
+
+<div class="language-glsl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Shader</span> <span class="s">"Custom/ColorMixDepth"</span> <span class="p">{</span>
+	<span class="n">Properties</span> <span class="p">{</span>
+		<span class="n">_MainTex</span> <span class="p">(</span><span class="s">"Base (RGBA)"</span><span class="p">,</span> <span class="mi">2</span><span class="n">D</span><span class="p">)</span> <span class="o">=</span> <span class="s">"white"</span> <span class="p">{}</span>
+		<span class="n">_DepthTex</span> <span class="p">(</span><span class="s">"Depth (RGBA)"</span><span class="p">,</span> <span class="mi">2</span><span class="n">D</span><span class="p">)</span> <span class="o">=</span> <span class="s">"white"</span> <span class="p">{}</span>
+	<span class="p">}</span>
+	<span class="n">SubShader</span> <span class="p">{</span>
+		<span class="n">Tags</span> <span class="p">{</span> <span class="s">"RenderType"</span><span class="o">=</span><span class="s">"Opaque"</span> <span class="p">}</span>
+		<span class="n">LOD</span> <span class="mi">200</span>
+		
+		<span class="n">CGPROGRAM</span>
+		<span class="cp">#pragma surface surf Lambert
+</span>
+		<span class="kt">sampler2D</span> <span class="n">_MainTex</span><span class="p">;</span>
+		<span class="kt">sampler2D</span> <span class="n">_DepthTex</span><span class="p">;</span>
+
+		<span class="k">struct</span> <span class="n">Input</span> <span class="p">{</span>
+			<span class="n">float2</span> <span class="n">uv_MainTex</span><span class="p">;</span>
+			<span class="n">float2</span> <span class="n">uv_DepthTex</span><span class="p">;</span>
+		<span class="p">};</span>
+
+		<span class="kt">void</span> <span class="n">surf</span> <span class="p">(</span><span class="n">Input</span> <span class="n">IN</span><span class="p">,</span> <span class="k">inout</span> <span class="n">SurfaceOutput</span> <span class="n">o</span><span class="p">)</span> <span class="p">{</span>
+			<span class="n">half4</span> <span class="n">c</span> <span class="o">=</span> <span class="n">tex2D</span> <span class="p">(</span><span class="n">_MainTex</span><span class="p">,</span> <span class="n">IN</span><span class="p">.</span><span class="n">uv_MainTex</span><span class="p">);</span>
+			<span class="n">half4</span> <span class="n">d</span> <span class="o">=</span> <span class="n">tex2D</span> <span class="p">(</span><span class="n">_DepthTex</span><span class="p">,</span> <span class="n">IN</span><span class="p">.</span><span class="n">uv_DepthTex</span><span class="p">);</span>
+			<span class="c1">//d = d.x == 1? 0 : d;</span>
+			<span class="n">o</span><span class="p">.</span><span class="n">Albedo</span> <span class="o">=</span> <span class="n">c</span><span class="p">.</span><span class="n">rgb</span><span class="o">*</span><span class="mi">0</span><span class="p">.</span><span class="mi">1</span> <span class="o">+</span> <span class="n">d</span><span class="p">.</span><span class="n">rgb</span><span class="o">*</span><span class="mi">0</span><span class="p">.</span><span class="mi">9</span><span class="p">;</span>
+			<span class="n">o</span><span class="p">.</span><span class="n">Alpha</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="n">ENDCG</span>
+	<span class="p">}</span> 
+	<span class="n">FallBack</span> <span class="s">"Diffuse"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">void</span> <span class="nf">OnRenderImage</span><span class="p">(</span><span class="n">RenderTexture</span> <span class="n">src</span><span class="p">,</span> <span class="n">RenderTexture</span> <span class="n">dst</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// if now rendering depth map</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">isRenderDepth</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">depthEdgeMaterial</span><span class="p">.</span><span class="nf">SetTexture</span><span class="p">(</span><span class="s">"_DepthTex"</span><span class="p">,</span> <span class="n">src</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">isUseColorMap</span><span class="p">)</span>
+            <span class="n">Graphics</span><span class="p">.</span><span class="nf">Blit</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">depthEdgeMaterial</span><span class="p">);</span>
+        <span class="k">else</span>
+            <span class="n">Graphics</span><span class="p">.</span><span class="nf">Blit</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// else rendering real color scene, mix the real color with depth map</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="n">mixMaterial</span><span class="p">.</span><span class="nf">SetTexture</span><span class="p">(</span><span class="s">"_MainTex"</span><span class="p">,</span> <span class="n">src</span><span class="p">);</span>
+        <span class="n">mixMaterial</span><span class="p">.</span><span class="nf">SetTexture</span><span class="p">(</span><span class="s">"_DepthTex"</span><span class="p">,</span> <span class="n">depthTexture</span><span class="p">);</span>
+        <span class="n">Graphics</span><span class="p">.</span><span class="nf">Blit</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">mixMaterial</span><span class="p">);</span>
+        <span class="nf">ReleaseTexture</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>上面的代码就是完成这个工作，需要理解的是，我们在调用 <code class="language-plaintext highlighter-rouge">RenderWithShader</code> 的时候，<code class="language-plaintext highlighter-rouge">OnRenderImage</code> 也会被调用，也就是这个函数被调用了两次，而两次调用需要完成的功能是不同的，所以我这里用一个变量来指示当前的渲染状态是做深度图还是混合。</p>
+
+<h1 id="完整的代码">完整的代码</h1>
+<p>代码文件有点多，就放到这里了<a href="/assets/post_assets/2014-3-27-unity-depth-minimap/2014-3-27-unity-depth-minimap.zip">depth-minimap</a>。</p>
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    除特别注明外，本站所有文章均为<a href="https://disenone.github.io" style = "color:#51aded;"> Disenone </a>原创，转载请注明出处来自<a href ="" style = "color:#51aded;"> Unity画深度图(Depth Map)和边缘检测(Edge Detection) </a>。
+                </p>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2014/03/15/unity-3rdperson-control0" data-toggle="tooltip" data-placement="top" title="Unity人物控制">
+                            前一篇<br>
+                            <span>Unity人物控制</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2014/03/30/unity-light-scattering" data-toggle="tooltip" data-placement="top" title="Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)">
+                            后一篇<br>
+                            <span>Unity实现体积光照散射 (Volumetric Light Scattering，云隙光)</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br/><br/>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2014/03/27/unity-depth-minimap>" class="leancloud_visitors" data-flag-title="Unity画深度图(Depth Map)和边缘检测(Edge Detection)">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="og:title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+</body>
+
+</html>

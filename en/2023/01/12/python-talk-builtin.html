@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="work smarter">
+
+    <title>Python 杂谈 1 - 探究 __builtins__ - Disenone</title>
+
+    <link rel="canonical" href="https://disenone.github.io/en//2023/01/12/python-talk-builtin">
+
+    <!-- Icons -->
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <!-- jQuery -->
+    <script src="/js/jquery.min.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/clean-blog.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link rel="stylesheet" href="/css/font-awesome.css"  type="text/css"> -->
+    <script src="https://kit.fontawesome.com/649f7f3b6f.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/Lora.css"  type="text/css">
+    <link rel="stylesheet" href="/css/Open_Sans.css"  type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+
+
+
+
+
+<body ontouchstart="">
+
+    <!-- Navigation -->
+
+<nav class="navbar navbar-default navbar-custom navbar-static-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/en/">Disenone</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="/en/">Home</a>
+                </li>
+                
+                <li>
+                    <a href="/en/about">About</a>
+                </li>
+                
+                <li>
+                    <a href="/en/archive">Archive</a>
+                </li>
+                
+                <li>
+                    <a href="/en/tags">Tags</a>
+                </li>
+                
+
+
+                <ul class="floating-menu lang-switcher">
+                    
+                    
+                    
+                        <li class="lang-option-inactive masthead__menu-item">
+                            
+                                <a lang="简体中文" href=" /2023/01/12/python-talk-builtin">
+                            
+                    
+                        简体中文
+                            </a>
+                        </li>
+                    
+                    
+                    
+                        <li class="lang-option-active masthead__menu-item">
+                            <a aria-current="page" aria-disabled="true" href="#" style="pointer-events:none;cursor:not-allowed;font-weight:bold;color:black">
+                    
+                        English
+                            </a>
+                        </li>
+                    
+                </ul>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+
+<!-- HTML elements for search-->
+<div id="search-container" style="float:right;position: fixed;right:0px; bottom:10px; z-index:999999;background:#eeeeee;padding:10px 10px 0px 10px;">
+    <input type="text" id="search-input" placeholder="search..." style="border:2px solid;border-radius:25px;padding-left:10px !important;" >
+    <ul id="results-container" style="max-width:300px;"></ul>
+</div>
+  
+
+<!-- script pointing to jekyll-search.js-->
+<script src="/js/simple-jekyll-search.min.js"></script>
+<script>
+      window.simpleJekyllSearch = new SimpleJekyllSearch({
+        searchInput: document.getElementById('search-input'),
+        resultsContainer: document.getElementById('results-container'),
+        json: '/search.json',
+        searchResultTemplate: '<li><a href="{url}" title="{desc}">{title}</a></li>',
+        noResultsText: 'No results found',
+        limit: 5,
+        fuzzy: false,
+        exclude: ['Welcome']
+      })
+</script>
+
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = "";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from
+     * $toggle/$collapse will break global delegation.
+     *
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    
+
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/green.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="Tags">
+                        
+                        <a class="tag" href="/en/Tags/#dev" title="dev">dev</a>
+                        
+                        <a class="tag" href="/en/Tags/#game" title="game">game</a>
+                        
+                    </div>
+                    <h1>Python 杂谈 1 - 探究 __builtins__</h1>
+                    
+                    <span class="meta">Posted by Disenone on January 12, 2023</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+<link rel="stylesheet" href="/css/backtop.css">  <!-- Back Top -->
+<script type="text/javascript" src="/js/backtop.js"></script>  <!-- Back Top -->
+
+<div id="back-top">
+  <a href="#top" title="回到顶部"></a>
+</div>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
+
+                <p class="copyright text-muted">
+                    Unless otherwise specified, all articles on this site are original works by <a href="https://disenone.github.io/en/" style = "color:#51aded;"> Disenone </a>. Please indicate the source as <a href ="" style = "color:#51aded;"> Python 杂谈 1 - 探究 __builtins__ </a> if you wish to reproduce them.
+                </p>
+
+                <hr>
+                
+                <meta property="og:title" content="Python 杂谈 1 - 探究 __builtins__ - Disenone" />
+
+<h2 id="引子">引子</h2>
+
+<p>我们知道，<code class="language-plaintext highlighter-rouge">__builtins__</code> 本身是在全局命名空间中就有的一个对象，是 <code class="language-plaintext highlighter-rouge">Python</code> 故意暴露出来给代码层的，在代码的任意地方都可以直接使用。但是有点冷的知识是，<code class="language-plaintext highlighter-rouge">__builtins__</code> 在 <code class="language-plaintext highlighter-rouge">main</code> 模块（也就是 <code class="language-plaintext highlighter-rouge">__main__</code>，指的都是同一个模块，后文可能会混用）里面是 <code class="language-plaintext highlighter-rouge">__builtin__</code> 这个模块，但在其他模块里面，它表示的是 <code class="language-plaintext highlighter-rouge">__builtin__.__dict__</code>，这就有点让人莫名其妙了。虽然官方不推荐直接使用 <code class="language-plaintext highlighter-rouge">__builtins__</code>，但你给我搞两种情况是怎么回事？本文我们就来盘一盘这个设定的由来，在这个过程中，我们还可以找到这些问题的答案：<code class="language-plaintext highlighter-rouge">__builtin__</code> 跟 <code class="language-plaintext highlighter-rouge">__builtins__</code> 有什么区别？<code class="language-plaintext highlighter-rouge">__builtins__</code> 在 <code class="language-plaintext highlighter-rouge">main</code> 模块跟其他模块为什么会设定成不同？<code class="language-plaintext highlighter-rouge">__builtins__</code> 是在哪里定义的？</p>
+
+<h2 id="__builtin__"><code class="language-plaintext highlighter-rouge">__builtin__</code></h2>
+
+<p>在探讨 <code class="language-plaintext highlighter-rouge">__builtins__</code> 之前，我们需要先看看 <code class="language-plaintext highlighter-rouge">__builtin__</code> 是什么。<code class="language-plaintext highlighter-rouge">__builtin__</code> 是存放所有内建对象的模块，我们平常可以直接使用的 <code class="language-plaintext highlighter-rouge">Python</code> 内建对象，本质上都是 <code class="language-plaintext highlighter-rouge">__builtin__</code> 模块里的对象，即放在 <code class="language-plaintext highlighter-rouge">__builtin__.__dict__</code> 里，对应着的是 <code class="language-plaintext highlighter-rouge">Python</code> 的内建名字空间。记住这个关键知识点：<code class="language-plaintext highlighter-rouge">__buintin__</code> 是一个模块 <code class="language-plaintext highlighter-rouge">module</code>。我们可以在 <code class="language-plaintext highlighter-rouge">Python</code> 源码中找到 <code class="language-plaintext highlighter-rouge">__builtin__</code> 模块的定义和使用（注意，下文提到的 <code class="language-plaintext highlighter-rouge">Python</code> 源码，都是指 CPython-2.7.18 源码）：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// pythonrun.c</span>
+<span class="kt">void</span>
+<span class="nf">Py_InitializeEx</span><span class="p">(</span><span class="kt">int</span> <span class="n">install_sigs</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PyInterpreterState</span> <span class="o">*</span><span class="n">interp</span><span class="p">;</span>
+    <span class="p">...</span>
+    <span class="c1">// 初始化 __builtin__</span>
+    <span class="n">bimod</span> <span class="o">=</span> <span class="n">_PyBuiltin_Init</span><span class="p">();</span>
+    <span class="c1">// interp-&gt;builtins = __builtin__.__dict__</span>
+    <span class="n">interp</span><span class="o">-&gt;</span><span class="n">builtins</span> <span class="o">=</span> <span class="n">PyModule_GetDict</span><span class="p">(</span><span class="n">bimod</span><span class="p">);</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="c1">// bltinmodule.c</span>
+<span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">_PyBuiltin_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">mod</span><span class="p">,</span> <span class="o">*</span><span class="n">dict</span><span class="p">,</span> <span class="o">*</span><span class="n">debug</span><span class="p">;</span>
+    <span class="n">mod</span> <span class="o">=</span> <span class="n">Py_InitModule4</span><span class="p">(</span><span class="s">"__builtin__"</span><span class="p">,</span> <span class="n">builtin_methods</span><span class="p">,</span>
+                         <span class="n">builtin_doc</span><span class="p">,</span> <span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">)</span><span class="nb">NULL</span><span class="p">,</span>
+                         <span class="n">PYTHON_API_VERSION</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">dict</span> <span class="o">=</span> <span class="n">PyModule_GetDict</span><span class="p">(</span><span class="n">mod</span><span class="p">);</span>
+
+    <span class="c1">// 给 dict 加上内建的对象</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="c1">// ceval.c</span>
+<span class="c1">// 获取 builtins</span>
+<span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">PyEval_GetBuiltins</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PyFrameObject</span> <span class="o">*</span><span class="n">current_frame</span> <span class="o">=</span> <span class="n">PyEval_GetFrame</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">current_frame</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">PyThreadState_GET</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">interp</span><span class="o">-&gt;</span><span class="n">builtins</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="n">current_frame</span><span class="o">-&gt;</span><span class="n">f_builtins</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">Python</code> 初始化的时候会调用 <code class="language-plaintext highlighter-rouge">_PyBuiltin_Init</code> 来创建 <code class="language-plaintext highlighter-rouge">__builtin__</code> 模块，并在里面添加上内建的对象，解释器本身会引用住 <code class="language-plaintext highlighter-rouge">interp-&gt;builtins = __buintin__.__dict__</code>，当前执行的栈帧结构同时也会引用一份 <code class="language-plaintext highlighter-rouge">current_frame-&gt;f_builtins</code>。那么很自然地，当执行代码需要根据名字寻找对象的时候，<code class="language-plaintext highlighter-rouge">Python</code> 会去 <code class="language-plaintext highlighter-rouge">current_frame-&gt;f_builtins</code> 里面来找，自然就能拿到所有的内建对象：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// ceval.c</span>
+<span class="n">TARGET</span><span class="p">(</span><span class="n">LOAD_NAME</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// 先在 f-&gt;f_locals 名字空间里面找</span>
+    <span class="p">...</span> 
+    <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 再找找全局空间</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">PyDict_GetItem</span><span class="p">(</span><span class="n">f</span><span class="o">-&gt;</span><span class="n">f_globals</span><span class="p">,</span> <span class="n">w</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// 这里就去内建空间找</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">PyDict_GetItem</span><span class="p">(</span><span class="n">f</span><span class="o">-&gt;</span><span class="n">f_builtins</span><span class="p">,</span> <span class="n">w</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">format_exc_check_arg</span><span class="p">(</span>
+                            <span class="n">PyExc_NameError</span><span class="p">,</span>
+                            <span class="n">NAME_ERROR_MSG</span><span class="p">,</span> <span class="n">w</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">Py_INCREF</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">PUSH</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+    <span class="n">DISPATCH</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>最后，由于 <code class="language-plaintext highlighter-rouge">__builtin__</code> 这个名字实在是太有迷惑性了，<code class="language-plaintext highlighter-rouge">Python3</code> 中已经改名为 <code class="language-plaintext highlighter-rouge">builtins</code>。</p>
+
+<h2 id="__builtins__"><code class="language-plaintext highlighter-rouge">__builtins__</code></h2>
+
+<p><code class="language-plaintext highlighter-rouge">__builtins__</code> 的表现是有点奇怪的：</p>
+<ul>
+  <li>在 <code class="language-plaintext highlighter-rouge">main</code> 模块中（<code class="language-plaintext highlighter-rouge">main</code> 模块，或者叫<code class="language-plaintext highlighter-rouge">最高层级代码运行所在环境</code>，是用户指定最先启动运行的 <code class="language-plaintext highlighter-rouge">Python</code> 模块，也就是通常我们在命令行执行 <code class="language-plaintext highlighter-rouge">python xxx.py</code> 时，<code class="language-plaintext highlighter-rouge">xxx.py</code> 这个模块），<code class="language-plaintext highlighter-rouge">__builtins__ = __builtin__</code>；</li>
+  <li>在其他模块中 <code class="language-plaintext highlighter-rouge">__builtins__ = __builtin__.__dict__</code>。</li>
+</ul>
+
+<p>相同的名字，但在不同的模块下表现却是不相同的，这样的设定很容易让人疑惑。不过只要知道这个设定，就足够支持你在 <code class="language-plaintext highlighter-rouge">Python</code> 中使用 <code class="language-plaintext highlighter-rouge">__builtins__</code>，疑惑并不会影响你写出足够安全的代码，诸如：</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">SetBuiltins</span><span class="p">(</span><span class="n">builtins</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nf">isinstance</span><span class="p">(</span><span class="n">builtins</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">builtins</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nf">setattr</span><span class="p">(</span><span class="n">builtins</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+
+<span class="nc">SetBuiltins</span><span class="p">(</span><span class="n">__builtins__</span><span class="p">,</span> <span class="sh">'</span><span class="s">test</span><span class="sh">'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>需要注意，其实并不建议使用 <code class="language-plaintext highlighter-rouge">__builtins__</code>：</p>
+
+<blockquote>
+  <p><strong>CPython implementation detail</strong>: Users should not touch <code class="language-plaintext highlighter-rouge">__builtins__</code>; it is strictly an implementation detail. Users wanting to override values in the builtins namespace should import the <code class="language-plaintext highlighter-rouge">__builtin__</code> (no ‘s’) module and modify its attributes appropriately.</p>
+</blockquote>
+
+<p>当然，这样的疑惑，总有一天会让你心痒难耐，我这里就决定继续探究下去，也因为这样，才有了这篇文章。我们下面的内容会深入到 <strong>CPython implementation detail</strong> 中去。</p>
+
+<h2 id="restricted-execution">Restricted Execution</h2>
+
+<p>Restricted Execution 可以理解为有限制地执行不安全的代码，所谓有限制，可以是限制网络、io 等等，把代码限制在一定的执行环境中，控制代码的执行权限，防止代码影响到外部的环境和系统。常见的用例就是一些在线代码执行网站，譬如这个：<a href="https://pythonsandbox.dev/">pythonsandbox</a>。</p>
+
+<p>跟你猜想的一样，<code class="language-plaintext highlighter-rouge">Python</code> 对 <code class="language-plaintext highlighter-rouge">__builtins__</code> 的设定是跟 Restricted Execution 有关。<code class="language-plaintext highlighter-rouge">Python</code> 在 2.3 版本之前，曾经提供过类似的功能 <a href="https://docs.python.org/2.7/library/restricted.html">Restricted Execution</a>，只是由于后来被证实为不可行的，只好把这个功能作废了，但代码在 2.7.18 版本还保留着，所以我们可以来考古。</p>
+
+<p>首先来看 <code class="language-plaintext highlighter-rouge">Python</code> 源码里面对 <code class="language-plaintext highlighter-rouge">__builtins__</code> 的设置：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// pythonrun.c</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">initmain</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">m</span><span class="p">,</span> <span class="o">*</span><span class="n">d</span><span class="p">;</span>
+    <span class="c1">// 获取 __main__ 模块</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">PyImport_AddModule</span><span class="p">(</span><span class="s">"__main__"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="n">Py_FatalError</span><span class="p">(</span><span class="s">"can't create __main__ module"</span><span class="p">);</span>
+
+    <span class="c1">// d = __main__.__dict__</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">PyModule_GetDict</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
+
+    <span class="c1">// 设置 __main__.__dict__['__builtins__']，如果已有，则跳过</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">PyDict_GetItemString</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s">"__builtins__"</span><span class="p">)</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">PyObject</span> <span class="o">*</span><span class="n">bimod</span> <span class="o">=</span> <span class="n">PyImport_ImportModule</span><span class="p">(</span><span class="s">"__builtin__"</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">bimod</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span>
+            <span class="n">PyDict_SetItemString</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s">"__builtins__"</span><span class="p">,</span> <span class="n">bimod</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">Py_FatalError</span><span class="p">(</span><span class="s">"can't add __builtins__ to __main__"</span><span class="p">);</span>
+        <span class="n">Py_XDECREF</span><span class="p">(</span><span class="n">bimod</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 <code class="language-plaintext highlighter-rouge">initmain</code> 中，<code class="language-plaintext highlighter-rouge">Python</code> 会给 <code class="language-plaintext highlighter-rouge">__main__</code> 模块设置 <code class="language-plaintext highlighter-rouge">__builtins__</code> 属性，默认等于 <code class="language-plaintext highlighter-rouge">__builtin__</code> 模块，但如果已有，则跳过不会重新设置。利用这个特点，我们就可以通过修改 <code class="language-plaintext highlighter-rouge">__main__.__builtins__</code> 来修改内建的一些功能，以达到限制代码执行权限的目的，具体的方法先按下不表，我们看看 <code class="language-plaintext highlighter-rouge">__builtins__</code> 是怎么被传递的。</p>
+
+<h2 id="__builtins__-的传递"><code class="language-plaintext highlighter-rouge">__builtins__</code> 的传递</h2>
+
+<p>在创建新的栈帧的时候：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PyFrameObject</span> <span class="o">*</span>
+<span class="nf">PyFrame_New</span><span class="p">(</span><span class="n">PyThreadState</span> <span class="o">*</span><span class="n">tstate</span><span class="p">,</span> <span class="n">PyCodeObject</span> <span class="o">*</span><span class="n">code</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">globals</span><span class="p">,</span>
+            <span class="n">PyObject</span> <span class="o">*</span><span class="n">locals</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">back</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="n">back</span><span class="o">-&gt;</span><span class="n">f_globals</span> <span class="o">!=</span> <span class="n">globals</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 取 globals['__builtins__'] 作为新栈帧的 __builtins__</span>
+        <span class="c1">// builtin_object 就是字符串 '__builtins__'</span>
+        <span class="n">builtins</span> <span class="o">=</span> <span class="n">PyDict_GetItem</span><span class="p">(</span><span class="n">globals</span><span class="p">,</span> <span class="n">builtin_object</span><span class="p">);</span>    
+        <span class="k">if</span> <span class="p">(</span><span class="n">builtins</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">PyModule_Check</span><span class="p">(</span><span class="n">builtins</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">builtins</span> <span class="o">=</span> <span class="n">PyModule_GetDict</span><span class="p">(</span><span class="n">builtins</span><span class="p">);</span>
+                <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">builtins</span> <span class="o">||</span> <span class="n">PyDict_Check</span><span class="p">(</span><span class="n">builtins</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">PyDict_Check</span><span class="p">(</span><span class="n">builtins</span><span class="p">))</span>
+                <span class="n">builtins</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="p">...</span>
+
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="cm">/* If we share the globals, we share the builtins.
+           Save a lookup and a call. */</span>
+        <span class="c1">// 或者直接继承上一层栈帧的 f_builtins</span>
+        <span class="n">builtins</span> <span class="o">=</span> <span class="n">back</span><span class="o">-&gt;</span><span class="n">f_builtins</span><span class="p">;</span>
+        <span class="n">assert</span><span class="p">(</span><span class="n">builtins</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="o">&amp;&amp;</span> <span class="n">PyDict_Check</span><span class="p">(</span><span class="n">builtins</span><span class="p">));</span>
+        <span class="n">Py_INCREF</span><span class="p">(</span><span class="n">builtins</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+    <span class="n">f</span><span class="o">-&gt;</span><span class="n">f_builtins</span> <span class="o">=</span> <span class="n">builtins</span><span class="p">;</span>
+    <span class="n">f</span><span class="o">-&gt;</span><span class="n">f_globals</span> <span class="o">=</span> <span class="n">globals</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>创建新的栈帧时，对于 <code class="language-plaintext highlighter-rouge">__builtins__</code> 的处理主要有两种情况：一种是没有上层栈帧的情况下，取 <code class="language-plaintext highlighter-rouge">globals['__builtins__']</code>；另一种是直接取上层栈帧的 <code class="language-plaintext highlighter-rouge">f_builtins</code>。联合起来看的话，可以理解为，一般情况下，在 <code class="language-plaintext highlighter-rouge">__main__</code> 中设置好的 <code class="language-plaintext highlighter-rouge">__builtins__</code>，会一直继承给后面的栈帧，相当于共用同一份。</p>
+
+<p><code class="language-plaintext highlighter-rouge">import</code> 模块时：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">load_compiled_module</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">cpathname</span><span class="p">,</span> <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">long</span> <span class="n">magic</span><span class="p">;</span>
+    <span class="n">PyCodeObject</span> <span class="o">*</span><span class="n">co</span><span class="p">;</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">m</span><span class="p">;</span>
+    <span class="p">...</span>
+    <span class="n">co</span> <span class="o">=</span> <span class="n">read_compiled_module</span><span class="p">(</span><span class="n">cpathname</span><span class="p">,</span> <span class="n">fp</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">PyImport_ExecCodeModuleEx</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">)</span><span class="n">co</span><span class="p">,</span> <span class="n">cpathname</span><span class="p">);</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+
+
+<span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">PyImport_ExecCodeModuleEx</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">co</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pathname</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">PyImport_AddModule</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="c1">// d = m.__dict__</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">PyModule_GetDict</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
+
+    <span class="c1">// 在这里设置新加载模块的 __builtins__ 属性</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">PyDict_GetItemString</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s">"__builtins__"</span><span class="p">)</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">PyDict_SetItemString</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s">"__builtins__"</span><span class="p">,</span>
+                                 <span class="n">PyEval_GetBuiltins</span><span class="p">())</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">goto</span> <span class="n">error</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+    <span class="c1">// globals = d, locals = d</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">PyEval_EvalCode</span><span class="p">((</span><span class="n">PyCodeObject</span> <span class="o">*</span><span class="p">)</span><span class="n">co</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">);</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">PyEval_EvalCode</span><span class="p">(</span><span class="n">PyCodeObject</span> <span class="o">*</span><span class="n">co</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">globals</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">locals</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">PyEval_EvalCodeEx</span><span class="p">(</span><span class="n">co</span><span class="p">,</span>
+                      <span class="n">globals</span><span class="p">,</span> <span class="n">locals</span><span class="p">,</span>
+                      <span class="p">(</span><span class="n">PyObject</span> <span class="o">**</span><span class="p">)</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                      <span class="p">(</span><span class="n">PyObject</span> <span class="o">**</span><span class="p">)</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                      <span class="p">(</span><span class="n">PyObject</span> <span class="o">**</span><span class="p">)</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                      <span class="nb">NULL</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">import</code> 其他模块的时候，会把该模块的 <code class="language-plaintext highlighter-rouge">__builtins__</code> 设置为 <code class="language-plaintext highlighter-rouge">PyEval_GetBuiltins()</code> 的返回结果，这个函数我们已经说过，大部分情况下相当于 <code class="language-plaintext highlighter-rouge">current_frame-&gt;f_builtins</code>。对于 <code class="language-plaintext highlighter-rouge">__main__</code> 模块的里面的 <code class="language-plaintext highlighter-rouge">import</code>，<code class="language-plaintext highlighter-rouge">current_frame</code> 就是 <code class="language-plaintext highlighter-rouge">__main__</code> 模块的栈帧，<code class="language-plaintext highlighter-rouge">current_frame-&gt;f_builtins = __main__.__dict__['__builtins__']</code>（上文 <code class="language-plaintext highlighter-rouge">PyFrame_New</code> 的第一种情况）。</p>
+
+<p>加载的新模块，会使用 <code class="language-plaintext highlighter-rouge">PyEval_EvalCode</code> 来执行新模块中的代码，可以看到，传给 <code class="language-plaintext highlighter-rouge">PyEval_EvalCode</code> 的参数 <code class="language-plaintext highlighter-rouge">globals</code>、<code class="language-plaintext highlighter-rouge">locals</code> 其实都是模块自身的 <code class="language-plaintext highlighter-rouge">__dict__</code>，并且模块 <code class="language-plaintext highlighter-rouge">m.__dict__['__builtins__'] = PyEval_GetBuiltins()</code> 。</p>
+
+<p>综合来看，我们可以得知，从 <code class="language-plaintext highlighter-rouge">__main__</code> 模块开始 <code class="language-plaintext highlighter-rouge">import</code> 的模块，也会继承 <code class="language-plaintext highlighter-rouge">__main__</code> 中的 <code class="language-plaintext highlighter-rouge">__builtins__</code>，并会在内部的 <code class="language-plaintext highlighter-rouge">import</code> 中传递下去，这样就可以确保，所有从 <code class="language-plaintext highlighter-rouge">__main__</code> 加载的模块和子模块，都能共用同一份来自 <code class="language-plaintext highlighter-rouge">__main__</code> 的 <code class="language-plaintext highlighter-rouge">__builtins__</code>。</p>
+
+<p>那么如果是在模块中调用的函数呢？对于模块中的函数，创建和调用时：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// ceval.c</span>
+<span class="c1">// 创建函数</span>
+<span class="n">TARGET</span><span class="p">(</span><span class="n">MAKE_FUNCTION</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">POP</span><span class="p">();</span> <span class="cm">/* code object */</span>
+    
+    <span class="c1">// 这里的 f-&gt;f_globals，相当于模块自身的 globals，由上文可知，也相当于 m.__dict__</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">PyFunction_New</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">f_globals</span><span class="p">);</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">PyFunction_New</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">code</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">globals</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PyFunctionObject</span> <span class="o">*</span><span class="n">op</span> <span class="o">=</span> <span class="n">PyObject_GC_New</span><span class="p">(</span><span class="n">PyFunctionObject</span><span class="p">,</span>
+                                        <span class="o">&amp;</span><span class="n">PyFunction_Type</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="c1">// 这里相当于 op-&gt;func_globals = globals = f-&gt;f_globals</span>
+    <span class="n">op</span><span class="o">-&gt;</span><span class="n">func_globals</span> <span class="o">=</span> <span class="n">globals</span><span class="p">;</span>     
+<span class="p">}</span>
+
+<span class="c1">// 调用函数</span>
+<span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">fast_function</span><span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="n">func</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">***</span><span class="n">pp_stack</span><span class="p">,</span> <span class="kt">int</span> <span class="n">n</span><span class="p">,</span> <span class="kt">int</span> <span class="n">na</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nk</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">PyCodeObject</span> <span class="o">*</span><span class="n">co</span> <span class="o">=</span> <span class="p">(</span><span class="n">PyCodeObject</span> <span class="o">*</span><span class="p">)</span><span class="n">PyFunction_GET_CODE</span><span class="p">(</span><span class="n">func</span><span class="p">);</span>
+    <span class="c1">// globals = func-&gt;func_globals</span>
+    <span class="n">PyObject</span> <span class="o">*</span><span class="n">globals</span> <span class="o">=</span> <span class="n">PyFunction_GET_GLOBALS</span><span class="p">(</span><span class="n">func</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="c1">// globals 传给 PyEval_EvalCodeEx，里面就会传给 PyFrame_New 来创建新的栈帧</span>
+    <span class="k">return</span> <span class="n">PyEval_EvalCodeEx</span><span class="p">(</span><span class="n">co</span><span class="p">,</span> <span class="n">globals</span><span class="p">,</span>
+                             <span class="p">(</span><span class="n">PyObject</span> <span class="o">*</span><span class="p">)</span><span class="nb">NULL</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">pp_stack</span><span class="p">)</span><span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="n">na</span><span class="p">,</span>
+                             <span class="p">(</span><span class="o">*</span><span class="n">pp_stack</span><span class="p">)</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">nk</span><span class="p">,</span> <span class="n">nk</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">nd</span><span class="p">,</span>
+                             <span class="n">PyFunction_GET_CLOSURE</span><span class="p">(</span><span class="n">func</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>创建函数时，会把 <code class="language-plaintext highlighter-rouge">f-&gt;f_globals</code> 存到函数结构体变量 <code class="language-plaintext highlighter-rouge">func_globals</code> 里面，而对于模块 <code class="language-plaintext highlighter-rouge">m</code>，<code class="language-plaintext highlighter-rouge">f-&gt;f_globals = m.__dict__</code>。函数执行的时候，传给 <code class="language-plaintext highlighter-rouge">PyFrame_New</code> 的 <code class="language-plaintext highlighter-rouge">globals</code> 参数，就是创建时候保存起来的 <code class="language-plaintext highlighter-rouge">func_globals</code>，<code class="language-plaintext highlighter-rouge">__builtins__</code> 自然就可以在 <code class="language-plaintext highlighter-rouge">func_globals</code> 中获取。</p>
+
+<p>至此，<code class="language-plaintext highlighter-rouge">__builtins__</code> 的传递是能保证一致性的，所有模块、子模块 、函数，栈帧等都能引用到同一个，也就是拥有相同的内建名字空间。</p>
+
+<h2 id="指定-__main__-模块执行">指定 <code class="language-plaintext highlighter-rouge">__main__</code> 模块执行</h2>
+
+<p>我们已经知道 <code class="language-plaintext highlighter-rouge">__main__</code> 模块自身的 <code class="language-plaintext highlighter-rouge">__builtins__</code> 可以传递给所有子模块、函数和栈帧，而在命令行执行 <code class="language-plaintext highlighter-rouge">python a.py</code> 时，Python 会把 <code class="language-plaintext highlighter-rouge">a.py</code> 作为 <code class="language-plaintext highlighter-rouge">__main__</code> 模块来执行，那这是如何做到的呢：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// python.c</span>
+<span class="kt">int</span>
+<span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="n">Py_Main</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// main.c</span>
+<span class="kt">int</span>
+<span class="nf">Py_Main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+    <span class="c1">// 尝试用模块的 importer 来执行代码</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">filename</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">sts</span> <span class="o">=</span> <span class="n">RunMainFromImporter</span><span class="p">(</span><span class="n">filename</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+    <span class="c1">// 一般我们自己的 py 文件，会使用这个来执行</span>
+    <span class="n">sts</span> <span class="o">=</span> <span class="n">PyRun_AnyFileExFlags</span><span class="p">(</span>
+            <span class="n">fp</span><span class="p">,</span>
+            <span class="n">filename</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">?</span> <span class="s">"&lt;stdin&gt;"</span> <span class="o">:</span> <span class="n">filename</span><span class="p">,</span>
+            <span class="n">filename</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cf</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+<span class="err">}</span>
+
+<span class="c1">// pythonrun.c</span>
+<span class="kt">int</span>
+<span class="nf">PyRun_AnyFileExFlags</span><span class="p">(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">,</span> <span class="kt">int</span> <span class="n">closeit</span><span class="p">,</span>
+                     <span class="n">PyCompilerFlags</span> <span class="o">*</span><span class="n">flags</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+    <span class="k">return</span> <span class="n">PyRun_SimpleFileExFlags</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">closeit</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span>
+<span class="nf">PyRun_SimpleFileExFlags</span><span class="p">(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">,</span> <span class="kt">int</span> <span class="n">closeit</span><span class="p">,</span>
+                        <span class="n">PyCompilerFlags</span> <span class="o">*</span><span class="n">flags</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">PyImport_AddModule</span><span class="p">(</span><span class="s">"__main__"</span><span class="p">);</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">PyModule_GetDict</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="c1">// 设置 __file__ 属性</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">PyDict_SetItemString</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s">"__file__"</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="p">...</span>
+    <span class="p">}</span>
+    <span class="p">...</span>
+    <span class="c1">// globals = locals = d = __main__.__dict__</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">run_pyc_file</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">PyObject</span> <span class="o">*</span>
+<span class="nf">run_pyc_file</span><span class="p">(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">,</span> <span class="n">PyObject</span> <span class="o">*</span><span class="n">globals</span><span class="p">,</span>
+             <span class="n">PyObject</span> <span class="o">*</span><span class="n">locals</span><span class="p">,</span> <span class="n">PyCompilerFlags</span> <span class="o">*</span><span class="n">flags</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">...</span>
+    <span class="c1">// 从 pyc 文件读取代码对象 co ，并执行代码</span>
+    <span class="c1">// PyEval_EvalCode 里面也同样会调用 PyFrame_New 创建新栈帧</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">PyEval_EvalCode</span><span class="p">(</span><span class="n">co</span><span class="p">,</span> <span class="n">globals</span><span class="p">,</span> <span class="n">locals</span><span class="p">);</span>
+    <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>当执行 <code class="language-plaintext highlighter-rouge">python a.py</code> 时，一般情况下会走到 <code class="language-plaintext highlighter-rouge">PyRun_SimpleFileExFlags</code>，<code class="language-plaintext highlighter-rouge">PyRun_SimpleFileExFlags</code> 里面会取出来 <code class="language-plaintext highlighter-rouge">__main__.__dict__</code>，作为代码执行时的 <code class="language-plaintext highlighter-rouge">globals</code> 和 <code class="language-plaintext highlighter-rouge">locals</code>，最终也会传到 <code class="language-plaintext highlighter-rouge">PyFrame_New</code> 中创建新的栈帧来执行 <code class="language-plaintext highlighter-rouge">a.py</code>。结合我们上文提到的 <code class="language-plaintext highlighter-rouge">__builtins__</code> 在模块和函数中传递，就可以让后续执行的代码都能共用同一份 <code class="language-plaintext highlighter-rouge">current_frame-&gt;f_builtins = __main__.__builtins__.__dict__</code>。</p>
+
+<h2 id="再论-restricted-execution">再论 Restricted Execution</h2>
+
+<p><code class="language-plaintext highlighter-rouge">Python</code> 在 2.3 版本之前，曾经提供过的 <a href="https://docs.python.org/2.7/library/restricted.html">Restricted Execution</a>，就是基于 <code class="language-plaintext highlighter-rouge">__builtins__</code> 的特性来制作的。或者可以认为，<code class="language-plaintext highlighter-rouge">__builtins__</code> 之所以设计成在 <code class="language-plaintext highlighter-rouge">__main__</code> 模块中是一个模块对象，而在其他模块中是一个 <code class="language-plaintext highlighter-rouge">dict</code> 对象，就是为了可以实现 <strong>Restricted Execution</strong>。</p>
+
+<p>考虑这种情况：如果我们可以自由定制自己的 <code class="language-plaintext highlighter-rouge">__builtin__</code> 模块，并设置成 <code class="language-plaintext highlighter-rouge">__main__.__builtins__</code>，那就相当于后续所有执行的代码，都会使用我们定制的模块，我们可以定制特定版本的 <code class="language-plaintext highlighter-rouge">open</code>、<code class="language-plaintext highlighter-rouge">__import__</code>、<code class="language-plaintext highlighter-rouge">file</code> 等内建函数和类型，更进一步，这种方式是不是可以帮助我们限制执行代码的权限，防止代码做一些不安全的函数调用，或者访问一些不安全的文件？</p>
+
+<p><code class="language-plaintext highlighter-rouge">Python</code> 当时就做过这种尝试，实现这个功能的模块就叫做: <code class="language-plaintext highlighter-rouge">rexec</code>。</p>
+
+<h3 id="rexec"><code class="language-plaintext highlighter-rouge">rexec</code></h3>
+
+<p>我无意太深入讲解 <code class="language-plaintext highlighter-rouge">rexec</code> 的实现，因为原理其实上文已经讲清楚了，并且这个模块本身就已经废弃，我这些仅简单做一些关键代码的摘要，方便查阅。</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># rexec.py
+</span><span class="k">class</span> <span class="nc">RExec</span><span class="p">(</span><span class="n">ihooks</span><span class="p">.</span><span class="n">_Verbose</span><span class="p">):</span>
+    <span class="bp">...</span>
+    <span class="n">nok_builtin_names</span> <span class="o">=</span> <span class="p">(</span><span class="sh">'</span><span class="s">open</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">file</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">reload</span><span class="sh">'</span><span class="p">,</span> <span class="sh">'</span><span class="s">__import__</span><span class="sh">'</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">hooks</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="bp">...</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">modules</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">...</span>
+        <span class="n">self</span><span class="p">.</span><span class="nf">make_builtin</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="nf">make_initial_modules</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="nf">make_sys</span><span class="p">()</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">loader</span> <span class="o">=</span> <span class="nc">RModuleLoader</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">hooks</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="n">self</span><span class="p">.</span><span class="n">importer</span> <span class="o">=</span> <span class="nc">RModuleImporter</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">loader</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">make_builtin</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">copy_except</span><span class="p">(</span><span class="n">__builtin__</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">nok_builtin_names</span><span class="p">)</span>
+        <span class="n">m</span><span class="p">.</span><span class="nb">__import__</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">r_import</span>
+        <span class="n">m</span><span class="p">.</span><span class="nb">reload</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">r_reload</span>
+        <span class="n">m</span><span class="p">.</span><span class="nb">open</span> <span class="o">=</span> <span class="n">m</span><span class="p">.</span><span class="nb">file</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">r_open</span>
+
+    <span class="k">def</span> <span class="nf">add_module</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">mname</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">.</span><span class="nf">get</span><span class="p">(</span><span class="n">mname</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">mname</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">hooks</span><span class="p">.</span><span class="nf">new_module</span><span class="p">(</span><span class="n">mname</span><span class="p">)</span>
+        <span class="n">m</span><span class="p">.</span><span class="n">__builtins__</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="sh">'</span><span class="s">__builtin__</span><span class="sh">'</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">m</span>
+
+    <span class="k">def</span> <span class="nf">r_exec</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">add_module</span><span class="p">(</span><span class="sh">'</span><span class="s">__main__</span><span class="sh">'</span><span class="p">)</span>
+        <span class="k">exec</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">m</span><span class="p">.</span><span class="n">__dict__</span>
+
+    <span class="k">def</span> <span class="nf">r_eval</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">add_module</span><span class="p">(</span><span class="sh">'</span><span class="s">__main__</span><span class="sh">'</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nf">eval</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">m</span><span class="p">.</span><span class="n">__dict__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">r_execfile</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="nb">file</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">add_module</span><span class="p">(</span><span class="sh">'</span><span class="s">__main__</span><span class="sh">'</span><span class="p">)</span>
+        <span class="nf">execfile</span><span class="p">(</span><span class="nb">file</span><span class="p">,</span> <span class="n">m</span><span class="p">.</span><span class="n">__dict__</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">r_execfile</code> 函数会把文件当作 <code class="language-plaintext highlighter-rouge">__main__</code> 模块来执行，只是 <code class="language-plaintext highlighter-rouge">__main__</code> 是定制过的。<code class="language-plaintext highlighter-rouge">self.add_module('__main__')</code> 里面，会设置模块的 <code class="language-plaintext highlighter-rouge">m.__builtins__ = self.modules['__builtin__']</code>，这个 <code class="language-plaintext highlighter-rouge">__builtin__</code> 是由 <code class="language-plaintext highlighter-rouge">make_builtin</code> 来定制生成的，在里面替换了 <code class="language-plaintext highlighter-rouge">__import__</code>、<code class="language-plaintext highlighter-rouge">reload</code>、<code class="language-plaintext highlighter-rouge">open</code> 函数，并删除了 <code class="language-plaintext highlighter-rouge">file</code> 类型。这样，我们就能控制要执行的代码对内建命名空间的访问了。</p>
+
+<p>对于一些内建模块，<code class="language-plaintext highlighter-rouge">rexec</code> 也做了定制，保护不安全的访问，譬如 <code class="language-plaintext highlighter-rouge">sys</code> 模块，只保留了一部分的对象，并且通过定制的 <code class="language-plaintext highlighter-rouge">self.loader</code>、<code class="language-plaintext highlighter-rouge">self.importer</code>，来实现 <code class="language-plaintext highlighter-rouge">import</code> 的时候，优先加载定制的模块。</p>
+
+<p>如果对代码细节感兴趣，请自行查阅相关源码。</p>
+
+<h3 id="rexec-的失败"><code class="language-plaintext highlighter-rouge">rexec</code> 的失败</h3>
+
+<p>上文提到，<code class="language-plaintext highlighter-rouge">Python 2.3</code> 之后，<code class="language-plaintext highlighter-rouge">rexec</code> 就已经废弃了，因为这种方式已经被证实为不可行。带着好奇心，我们来简单溯源一下：</p>
+
+<ul>
+  <li>在社区有人报告了 <a href="https://mail.python.org/pipermail/python-dev/2002-December/031160.html">Bug</a>，并引发了开发者之间的讨论：
+    <blockquote>
+      <p>it’s never going to be safe, and I doubt it’s very useful as long as it’s not safe.</p>
+    </blockquote>
+
+    <blockquote>
+      <p>Every change is a potential security hole.</p>
+    </blockquote>
+
+    <blockquote>
+      <p>it’s hard to predict what change is going to break it.</p>
+    </blockquote>
+
+    <blockquote>
+      <p>I don’t expect you’ll ever reach the point where it’ll be wise to advertise this as safe.  I certainly won’t.</p>
+    </blockquote>
+
+    <blockquote>
+      <p>this is only a useful occupation if you expect to eventually reach a point where you expect that there aren’t any security flaws left.  Jeremy &amp; I both doubt that Python will ever reach that level, meaning that the whole exercise of fixing security flaws is a waste of time (if you know you <em>can’t</em> make it safe, don’t waste time trying).</p>
+    </blockquote>
+
+    <blockquote>
+      <p>I agree (but I have said that in past) the best thing is to deprecate/rip out rexec.</p>
+    </blockquote>
+
+    <blockquote>
+      <p>The code will still be in older versions if someone decides to pick it up and work on it as a separate project.</p>
+    </blockquote>
+  </li>
+  <li>该 Bug 的起因是 <code class="language-plaintext highlighter-rouge">Python</code> 引入了新式类（new-style class） <code class="language-plaintext highlighter-rouge">object</code>，导致 <code class="language-plaintext highlighter-rouge">rexec</code> 不能正常工作。于是开发者表示，在可预见的未来，这种情况都很难避免，任意的修改都会可能导致 <code class="language-plaintext highlighter-rouge">rexec</code> 出现漏洞，不能正常工作，或者被突破权限的限制，基本上无法实现没有漏洞地去提供一个安全环境的愿景，开发者需要不断地修修补补，浪费大量的时间。最终，<code class="language-plaintext highlighter-rouge">rexec</code> 这个模块就被废弃掉了，<code class="language-plaintext highlighter-rouge">Python</code> 也没有再提供类似的功能。但关于 <code class="language-plaintext highlighter-rouge">__builtins__</code> 的设定，由于兼容性等问题，就继续保留下来了。</li>
+</ul>
+
+<p>后面在大概 2010 年的时候，有位程序员推出了 <a href="https://github.com/vstinner/pysandbox">pysandbox</a>，致力于提供可以替代 <code class="language-plaintext highlighter-rouge">rexec</code> 的 <code class="language-plaintext highlighter-rouge">Python</code> 沙盒环境。但是 3 年后，作者主动放弃了这个项目，并详细说明了为什么作者认为这个项目是失败的：<a href="https://mail.python.org/pipermail/python-dev/2013-November/130132.html">The pysandbox project is broken</a>，也有其他作者撰文总结了这个项目的失败：<a href="https://lwn.net/Articles/574215/">The failure of pysandbox</a>。如果感兴趣的话，可以具体去翻翻原文，我这里也给一些摘要来帮助了解：</p>
+
+<blockquote>
+  <p>After having work during 3 years on a pysandbox project to sandbox untrusted code, I now reached a point where I am convinced that pysandbox is broken by design. Different developers tried to convinced me before that pysandbox design is unsafe, but I had to experience it myself to be convineced.</p>
+</blockquote>
+
+<blockquote>
+  <p>I now agree that putting a sandbox in CPython is the wrong design. There are too many ways to escape the untrusted namespace using the various introspection features of the Python language. To guarantee the [safety] of a security product, the code should be [carefully] audited and the code to review must be as small as possible. Using pysandbox, the “code” is the whole Python core which is a really huge code base. For example, the Python and Objects directories of Python 3.4 contain more than 126,000 lines of C code.</p>
+</blockquote>
+
+<blockquote>
+  <p>The security of pysandbox is the security of its weakest part. A single bug is enough to escape the whole sandbox.</p>
+</blockquote>
+
+<blockquote>
+  <p>pysandbox cannot be used in practice. To protect the untrusted namespace, pysandbox installs a lot of different protections. Because of all these protections, it becomes hard to write Python code. Basic features like “del dict[key]” are denied. Passing an object to a sandbox is not possible to sandbox, pysandbox is unable to proxify arbitary objects. For something more complex than evaluating “1+(2*3)”, pysandbox cannot be used in practice, because of all these protections.</p>
+</blockquote>
+
+<p><strong>pysandbox</strong> 的作者认为，在 <code class="language-plaintext highlighter-rouge">Python</code> 里面放一个沙盒环境是错误的设计，有太多的方式可以从沙盒中逃逸出去，<code class="language-plaintext highlighter-rouge">Python</code> 提供的语言特性很丰富，<code class="language-plaintext highlighter-rouge">CPython</code> 源码的代码量很大，基本不可能保证有足够的安全性。而 <strong>pysandbox</strong> 的开发过程就是在不断地打补丁，补丁太多，限制太多，以至于作者认为 <strong>pysandbox</strong> 已经没法实际使用，因为很多的语法特性和功能都被限制不能使用了，譬如简单的 <code class="language-plaintext highlighter-rouge">del dict[key]</code>。</p>
+
+<h2 id="restricted-execution-出路在哪">Restricted Execution 出路在哪</h2>
+
+<p>既然 <code class="language-plaintext highlighter-rouge">rexec</code> 和 <strong>pysandbox</strong> 这种通过 Patch Python 来提供沙盒环境的方法（这里姑且把这种方法称作 Patch Python）已经走不通了，那我不禁好奇：要怎么才能给 Python 提供一个能用的沙盒环境？</p>
+
+<p>在这里我继续收集了一些其他的实现方法或者案例，方便参考和查阅：</p>
+
+<ul>
+  <li>
+    <p><a href="https://doc.pypy.org/en/latest/sandbox.html">PyPy</a> 有一个<a href="https://foss.heptapod.net/pypy/pypy/-/tree/branch/sandbox-2">分支</a>提供了沙盒的功能，结合额外的 <a href="https://foss.heptapod.net/pypy/sandboxlib">sandboxlib</a>，可以自行编译出带沙盒环境版本的 PyPy。如果感兴趣，可以尝试自行配置，参考这里的一些<a href="https://foss.heptapod.net/pypy/pypy/-/issues/3192">说明</a>。PyPy 实现的原理是创建一个子进程，子进程的所有输入输出和系统调用，都会重定向到外部进程，由外部进程控制这些权限，另外也可以控制内存和 CPU 的使用量。需要注意的是，这个分支也有段时间没有新的提交了，请谨慎使用。</p>
+  </li>
+  <li>
+    <p>借助操作系统提供的沙盒环境工具。<a href="https://en.wikipedia.org/wiki/Seccomp">seccomp</a> 是 Linux 内核提供的计算安全工具，<a href="https://github.com/seccomp/libseccomp/tree/main/src/python">libsecoomp</a> 提供了 Python 绑定，可以内嵌到代码里面使用；或者使用基于 seccomp 实现的工具来执行代码，譬如 <a href="https://firejail.wordpress.com/">Firejail</a>。<a href="https://apparmor.net/">AppArmor</a> 是一个 Linux 内核安全模块，允许管理员控制程序能访问的系统资源和功能，保护操作系统。<a href="https://github.com/openedx/codejail">codejail</a> 是基于 AppArmor 实现的 Python 沙盒环境，有兴趣可以尝试。还有很多类似的工具，这里不一一列举。</p>
+  </li>
+  <li>
+    <p>使用沙盒虚拟环境或者容器。<a href="https://learn.microsoft.com/zh-cn/windows/security/threat-protection/windows-sandbox/windows-sandbox-overview">Windows 沙盒</a>，<a href="https://linuxcontainers.org/">LXC</a>, <a href="https://www.docker.com/">Docker</a> 等等，这里不再详述。</p>
+  </li>
+</ul>
+
+<h2 id="总结">总结</h2>
+
+<p>本文篇幅有点长，感谢看到这里，文章一开始所列出的疑问，相信都已经解答完毕。</p>
+
+
+
+                <hr>
+
+                
+                <p class="copyright text-muted">
+                    Unless otherwise specified, all articles on this site are original works by <a href="https://disenone.github.io/en/" style = "color:#51aded;"> Disenone </a>. Please indicate the source as <a href ="" style = "color:#51aded;"> Python 杂谈 1 - 探究 __builtins__ </a> if you wish to reproduce them.
+                </p>
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/en/2021/11/18/aoi-tesing" data-toggle="tooltip" data-placement="top" title="游戏 AOI 算法解析和性能实测">
+                            前一篇<br>
+                            <span>游戏 AOI 算法解析和性能实测</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/en/2024/01/12/new-wiki" data-toggle="tooltip" data-placement="top" title="欢迎访问新的博客">
+                            后一篇<br>
+                            <span>欢迎访问新的博客</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+                <!-- AddToAny BEGIN -->
+                <div class="a2a_kit a2a_kit_size_32 a2a_default_style">
+                    <a class="a2a_dd" href="https://www.addtoany.com/share"></a>
+                    <a class="a2a_button_copy_link"></a>
+                    <a class="a2a_button_wechat"></a>
+                    <a class="a2a_button_sina_weibo"></a>
+                    <a class="a2a_button_douban"></a>
+                    <a class="a2a_button_facebook"></a>
+                    <a class="a2a_button_twitter"></a>
+                </div>
+                <script async src="https://static.addtoany.com/menu/page.js"></script>
+                <br/><br/>
+                <!-- AddToAny END -->
+
+                <!-- gitalk comment -->
+                <!-- <div id="gitalk-container"></div>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+                <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+                <script>
+                    const gitalk = new Gitalk({
+                    clientID: '3df830adbf9c21bcfc8f',
+                    clientSecret: '53e8c8fd28f21fbe93390f9fbb765ad5192e38ca',
+                    repo: 'disenone.github.io',
+                    owner: 'disenone',
+                    admin: ['disenone'],
+                    id: location.pathname,      // Ensure uniqueness and length less than 50
+                    distractionFreeMode: false  // Facebook-like distraction free mode
+                    })
+
+                    gitalk.render('gitalk-container')
+                </script> -->
+
+                <!-- Valine comment -->
+                <!-- <div id="vcomments"></div>
+                <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+                <script>
+                    new Valine({
+                        el: '#vcomments',
+                        appId: '75inVPrK8Hb28jJ8l7PzdGdX-MdYXbMMI',
+                        appKey: 'xjKGHbfLb6T3XGuE5xlge4K7',
+                        visitor: true
+                    })
+                </script> -->
+                
+                <!-- id 将作为查询条件 -->
+                <!-- <span id="</2023/01/12/python-talk-builtin>" class="leancloud_visitors" data-flag-title="Python 杂谈 1 - 探究 __builtins__">
+                    <em class="post-meta-item-text">本页访问次数 </em>
+                    <i class="leancloud-visitors-count"></i>
+                </span> -->
+
+                <!-- giscus comment -->
+                <script src="https://giscus.app/client.js"
+                    data-repo="disenone/disenone.github.io"
+                    data-repo-id="MDEwOlJlcG9zaXRvcnkxNzYyODY3Mg=="
+                    data-category="Announcements"
+                    data-category-id="DIC_kwDOAQz-AM4CT6GS"
+                    data-mapping="og:title"
+                    data-strict="1"
+                    data-reactions-enabled="1"
+                    data-emit-metadata="0"
+                    data-input-position="top"
+                    data-theme="light"
+                    data-lang="zh-CN"
+                    data-loading="lazy"
+                    crossorigin="anonymous"
+                    async>
+                </script>
+            </div>
+
+            <!-- Side Catalog Container -->
+            
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+            
+
+        </div>
+    </div>
+</article>
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 0em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<script src="/js/busuanzi.pure.mini.js"></script>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    <!-- kill the Facebook and Weibo -->
+
+                    <li>
+                        <!--<a href="/en/feed.xml">-->
+                        <a href="http://feeds.feedburner.com/Disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+
+                    <!--
+                    
+                    -->
+                    
+                    <li>
+                        <a href="https://github.com/disenone">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+                    <!--
+                    
+                    -->
+
+                </ul>
+                <p class="copyright text-muted">
+                &copy; 2024 Disenone ❖ Powered by Jekyll.
+                </p>
+
+                <!-- 访问统计 -->
+                <p class="copyright text-muted">
+                <span id="busuanzi_container_site_uv">
+                    <span id="busuanzi_value_site_uv"></span> Visitors.
+                </span>
+                <span id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv"></span> Total Visits.
+                </span>
+                <span id="busuanzi_container_page_pv">
+                    <span id="busuanzi_value_page_pv"></span> Page Visits.
+                </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js"></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/clean-blog.js"></script>
+
+
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!-- baidu auto push -->
+<script>
+//改良版本的百度索引自动推送脚本
+(function(){
+		var canonicalURL, curProtocol;
+		//Get the  tag
+		var x=document.getElementsByTagName("link");
+		//Find the last canonical URL
+		if(x.length > 0){
+			for (i=0;i<x.length;i++){
+				if(x[i].rel.toLowerCase() == 'canonical' && x[i].href){
+					canonicalURL=x[i].href;
+				}
+			}
+		}
+		//Get protocol
+	    if (!canonicalURL){
+	    	curProtocol = window.location.protocol.split(':')[0];
+	    }
+	    else{
+	    	curProtocol = canonicalURL.split(':')[0];
+	    }
+	    //Get current URL if the canonical URL does not exist
+	    if (!canonicalURL) canonicalURL = window.location.href;
+	    //Assign script content. Replace current URL with the canonical URL
+    	!function(){var e=/([http|https]:\/\/[a-zA-Z0-9\_\.]+\.baidu\.com)/gi,r=canonicalURL,t=document.referrer;if(!e.test(r)){var n=(String(curProtocol).toLowerCase() === 'https')?"https://sp0.baidu.com/9_Q4simg2RQJ8t7jm9iCKT-xh_/s.gif":"//api.share.baidu.com/s.gif";t?(n+="?r="+encodeURIComponent(document.referrer),r&&(n+="&l="+r)):r&&(n+="?l="+r);var i=new Image;i.src=n}}(window);})();
+</script>
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+</body>
+
+</html>

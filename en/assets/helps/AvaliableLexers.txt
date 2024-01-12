@@ -1,0 +1,2482 @@
+Available lexers
+This page lists all available builtin lexers and the options they take.
+
+Currently, all lexers support these options:
+
+stripnl
+Strip leading and trailing newlines from the input (default: True)
+stripall
+Strip all leading and trailing whitespace from the input (default: False).
+ensurenl
+Make sure that the input ends with a newline (default: True). This is required for some lexers that consume input linewise.
+
+New in version 1.3.
+
+tabsize
+If given and greater than 0, expand tabs in the input (default: 0).
+encoding
+If given, must be an encoding name (such as "utf-8"). This encoding will be used to convert the input string to Unicode (if it is not already a Unicode string). The default is "latin1".
+
+If this option is set to "guess", a simple UTF-8 vs. Latin-1 detection is used, if it is set to "chardet", the chardet library is used to guess the encoding of the input.
+
+New in version 0.6.
+
+The “Short Names” field lists the identifiers that can be used with the get_lexer_by_name() function.
+
+These lexers are builtin and can be imported from pygments.lexers:
+
+Lexers for agile languages
+
+class pygments.lexers.agile.CrocLexer
+Short names:	croc
+Filenames:	*.croc
+MIME types:	text/x-crocsrc
+For Croc source.
+
+class pygments.lexers.agile.DgLexer
+Short names:	dg
+Filenames:	*.dg
+MIME types:	text/x-dg
+Lexer for dg, a functional and object-oriented programming language running on the CPython 3 VM.
+
+New in Pygments 1.6.
+
+class pygments.lexers.agile.FactorLexer
+Short names:	factor
+Filenames:	*.factor
+MIME types:	text/x-factor
+Lexer for the Factor language.
+
+New in Pygments 1.4.
+
+class pygments.lexers.agile.FancyLexer
+Short names:	fancy, fy
+Filenames:	*.fy, *.fancypack
+MIME types:	text/x-fancysrc
+Pygments Lexer For Fancy.
+
+Fancy is a self-hosted, pure object-oriented, dynamic, class-based, concurrent general-purpose programming language running on Rubinius, the Ruby VM.
+
+New in Pygments 1.5.
+
+class pygments.lexers.agile.HyLexer
+Short names:	hylang
+Filenames:	*.hy
+MIME types:	text/x-hy, application/x-hy
+Lexer for Hy source code.
+
+New in Pygments 1.7.
+
+class pygments.lexers.agile.IoLexer
+Short names:	io
+Filenames:	*.io
+MIME types:	text/x-iosrc
+For Io (a small, prototype-based programming language) source.
+
+New in Pygments 0.10.
+
+class pygments.lexers.agile.LuaLexer
+Short names:	lua
+Filenames:	*.lua, *.wlua
+MIME types:	text/x-lua, application/x-lua
+For Lua source code.
+
+Additional options accepted:
+
+func_name_highlighting
+If given and True, highlight builtin function names (default: True).
+disabled_modules
+If given, must be a list of module names whose function names should not be highlighted. By default all modules are highlighted.
+
+To get a list of allowed modules have a look into the _luabuiltins module:
+
+>>> from pygments.lexers._luabuiltins import MODULES
+>>> MODULES.keys()
+['string', 'coroutine', 'modules', 'io', 'basic', ...]
+class pygments.lexers.agile.MiniDLexer
+Short names:	minid
+Filenames:	*.md
+MIME types:	text/x-minidsrc
+For MiniD source. MiniD is now known as Croc.
+
+class pygments.lexers.agile.MoonScriptLexer
+Short names:	moon, moonscript
+Filenames:	*.moon
+MIME types:	text/x-moonscript, application/x-moonscript
+For MoonScript source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.agile.Perl6Lexer
+Short names:	perl6, pl6
+Filenames:	*.pl, *.pm, *.nqp, *.p6, *.6pl, *.p6l, *.pl6, *.6pm, *.p6m, *.pm6, *.t
+MIME types:	text/x-perl6, application/x-perl6
+For Perl 6 source code.
+
+New in Pygments 1.7.
+
+class pygments.lexers.agile.PerlLexer
+Short names:	perl, pl
+Filenames:	*.pl, *.pm, *.t
+MIME types:	text/x-perl, application/x-perl
+For Perl source code.
+
+class pygments.lexers.agile.Python3Lexer
+Short names:	python3, py3
+Filenames:	None
+MIME types:	text/x-python3, application/x-python3
+For Python source code (version 3.0).
+
+New in Pygments 0.10.
+
+class pygments.lexers.agile.Python3TracebackLexer
+Short names:	py3tb
+Filenames:	*.py3tb
+MIME types:	text/x-python3-traceback
+For Python 3.0 tracebacks, with support for chained exceptions.
+
+New in Pygments 1.0.
+
+class pygments.lexers.agile.PythonConsoleLexer
+Short names:	pycon
+Filenames:	None
+MIME types:	text/x-python-doctest
+For Python console output or doctests, such as:
+
+>>> a = 'foo'
+>>> print a
+foo
+>>> 1 / 0
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ZeroDivisionError: integer division or modulo by zero
+Additional options:
+
+python3
+Use Python 3 lexer for code. Default is False. New in Pygments 1.0.
+class pygments.lexers.agile.PythonLexer
+Short names:	python, py, sage
+Filenames:	*.py, *.pyw, *.sc, SConstruct, SConscript, *.tac, *.sage
+MIME types:	text/x-python, application/x-python
+For Python source code.
+
+class pygments.lexers.agile.PythonTracebackLexer
+Short names:	pytb
+Filenames:	*.pytb
+MIME types:	text/x-python-traceback
+For Python tracebacks.
+
+New in Pygments 0.7.
+
+class pygments.lexers.agile.RubyConsoleLexer
+Short names:	rbcon, irb
+Filenames:	None
+MIME types:	text/x-ruby-shellsession
+For Ruby interactive console (irb) output like:
+
+irb(main):001:0> a = 1
+=> 1
+irb(main):002:0> puts a
+1
+=> nil
+class pygments.lexers.agile.RubyLexer
+Short names:	rb, ruby, duby
+Filenames:	*.rb, *.rbw, Rakefile, *.rake, *.gemspec, *.rbx, *.duby
+MIME types:	text/x-ruby, application/x-ruby
+For Ruby source code.
+
+class pygments.lexers.agile.TclLexer
+Short names:	tcl
+Filenames:	*.tcl
+MIME types:	text/x-tcl, text/x-script.tcl, application/x-tcl
+For Tcl source code.
+
+New in Pygments 0.10.
+
+Lexers for assembly languages
+
+class pygments.lexers.asm.CObjdumpLexer
+Short names:	c-objdump
+Filenames:	*.c-objdump
+MIME types:	text/x-c-objdump
+For the output of ‘objdump -Sr on compiled C files’
+
+class pygments.lexers.asm.Ca65Lexer
+Short names:	ca65
+Filenames:	*.s
+MIME types:	None
+For ca65 assembler sources.
+
+New in Pygments 1.6.
+
+class pygments.lexers.asm.CppObjdumpLexer
+Short names:	cpp-objdump, c++-objdumb, cxx-objdump
+Filenames:	*.cpp-objdump, *.c++-objdump, *.cxx-objdump
+MIME types:	text/x-cpp-objdump
+For the output of ‘objdump -Sr on compiled C++ files’
+
+class pygments.lexers.asm.DObjdumpLexer
+Short names:	d-objdump
+Filenames:	*.d-objdump
+MIME types:	text/x-d-objdump
+For the output of ‘objdump -Sr on compiled D files’
+
+class pygments.lexers.asm.GasLexer
+Short names:	gas, asm
+Filenames:	*.s, *.S
+MIME types:	text/x-gas
+For Gas (AT&T) assembly code.
+
+class pygments.lexers.asm.LlvmLexer
+Short names:	llvm
+Filenames:	*.ll
+MIME types:	text/x-llvm
+For LLVM assembly code.
+
+class pygments.lexers.asm.NasmLexer
+Short names:	nasm
+Filenames:	*.asm, *.ASM
+MIME types:	text/x-nasm
+For Nasm (Intel) assembly code.
+
+class pygments.lexers.asm.ObjdumpLexer
+Short names:	objdump
+Filenames:	*.objdump
+MIME types:	text/x-objdump
+For the output of ‘objdump -dr’
+
+Lexers for compiled languages
+
+class pygments.lexers.compiled.AdaLexer
+Short names:	ada, ada95ada2005
+Filenames:	*.adb, *.ads, *.ada
+MIME types:	text/x-ada
+For Ada source code.
+
+New in Pygments 1.3.
+
+class pygments.lexers.compiled.BlitzBasicLexer
+Short names:	blitzbasic, b3d, bplus
+Filenames:	*.bb, *.decls
+MIME types:	text/x-bb
+For BlitzBasic source code.
+
+New in Pygments 1.7.
+
+class pygments.lexers.compiled.BlitzMaxLexer
+Short names:	blitzmax, bmax
+Filenames:	*.bmx
+MIME types:	text/x-bmx
+For BlitzMax source code.
+
+New in Pygments 1.4.
+
+class pygments.lexers.compiled.CLexer
+Short names:	c
+Filenames:	*.c, *.h, *.idc
+MIME types:	text/x-chdr, text/x-csrc
+For C source code with preprocessor directives.
+
+class pygments.lexers.compiled.ChapelLexer
+Short names:	chapel, chpl
+Filenames:	*.chpl
+MIME types:	None
+For Chapel source.
+
+New in Pygments 1.7.
+
+class pygments.lexers.compiled.ClayLexer
+Short names:	clay
+Filenames:	*.clay
+MIME types:	text/x-clay
+For Clay source.
+
+New in Pygments 1.7.
+
+class pygments.lexers.compiled.CobolFreeformatLexer
+Short names:	cobolfree
+Filenames:	*.cbl, *.CBL
+MIME types:	None
+Lexer for Free format OpenCOBOL code.
+
+New in Pygments 1.6.
+
+class pygments.lexers.compiled.CobolLexer
+Short names:	cobol
+Filenames:	*.cob, *.COB, *.cpy, *.CPY
+MIME types:	text/x-cobol
+Lexer for OpenCOBOL code.
+
+New in Pygments 1.6.
+
+class pygments.lexers.compiled.CppLexer
+Short names:	cpp, c++
+Filenames:	*.cpp, *.hpp, *.c++, *.h++, *.cc, *.hh, *.cxx, *.hxx, *.C, *.H, *.cp, *.CPP
+MIME types:	text/x-c++hdr, text/x-c++src
+For C++ source code with preprocessor directives.
+
+class pygments.lexers.compiled.CudaLexer
+Short names:	cuda, cu
+Filenames:	*.cu, *.cuh
+MIME types:	text/x-cuda
+For NVIDIA CUDA™ source.
+
+New in Pygments 1.6.
+
+class pygments.lexers.compiled.CythonLexer
+Short names:	cython, pyx, pyrex
+Filenames:	*.pyx, *.pxd, *.pxi
+MIME types:	text/x-cython, application/x-cython
+For Pyrex and Cython source code.
+
+New in Pygments 1.1.
+
+class pygments.lexers.compiled.DLexer
+Short names:	d
+Filenames:	*.d, *.di
+MIME types:	text/x-dsrc
+For D source.
+
+New in Pygments 1.2.
+
+class pygments.lexers.compiled.DelphiLexer
+Short names:	delphi, pas, pascal, objectpascal
+Filenames:	*.pas
+MIME types:	text/x-pascal
+For Delphi (Borland Object Pascal), Turbo Pascal and Free Pascal source code.
+
+Additional options accepted:
+
+turbopascal
+Highlight Turbo Pascal specific keywords (default: True).
+delphi
+Highlight Borland Delphi specific keywords (default: True).
+freepascal
+Highlight Free Pascal specific keywords (default: True).
+units
+A list of units that should be considered builtin, supported are System, SysUtils, Classes and Math. Default is to consider all of them builtin.
+class pygments.lexers.compiled.DylanConsoleLexer
+Short names:	dylan-console, dylan-repl
+Filenames:	*.dylan-console
+MIME types:	text/x-dylan-console
+For Dylan interactive console output like:
+
+? let a = 1;
+=> 1
+? a
+=> 1
+This is based on a copy of the RubyConsoleLexer.
+
+New in Pygments 1.6.
+
+class pygments.lexers.compiled.DylanLexer
+Short names:	dylan
+Filenames:	*.dylan, *.dyl, *.intr
+MIME types:	text/x-dylan
+For the Dylan language.
+
+New in Pygments 0.7.
+
+class pygments.lexers.compiled.DylanLidLexer
+Short names:	dylan-lid, lid
+Filenames:	*.lid, *.hdp
+MIME types:	text/x-dylan-lid
+For Dylan LID (Library Interchange Definition) files.
+
+New in Pygments 1.6.
+
+class pygments.lexers.compiled.ECLexer
+Short names:	ec
+Filenames:	*.ec, *.eh
+MIME types:	text/x-echdr, text/x-ecsrc
+For eC source code with preprocessor directives.
+
+New in Pygments 1.5.
+
+class pygments.lexers.compiled.EiffelLexer
+Short names:	eiffel
+Filenames:	*.e
+MIME types:	text/x-eiffel
+For Eiffel source code.
+
+New in Pygments 1.7.
+
+class pygments.lexers.compiled.FantomLexer
+Short names:	fan
+Filenames:	*.fan
+MIME types:	application/x-fantom
+For Fantom source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.compiled.FelixLexer
+Short names:	felix, flx
+Filenames:	*.flx, *.flxh
+MIME types:	text/x-felix
+For Felix source code.
+
+New in Pygments 1.2.
+
+class pygments.lexers.compiled.FortranLexer
+Short names:	fortran
+Filenames:	*.f, *.f90, *.F, *.F90
+MIME types:	text/x-fortran
+Lexer for FORTRAN 90 code.
+
+New in Pygments 0.10.
+
+class pygments.lexers.compiled.GLShaderLexer
+Short names:	glsl
+Filenames:	*.vert, *.frag, *.geo
+MIME types:	text/x-glslsrc
+GLSL (OpenGL Shader) lexer.
+
+New in Pygments 1.1.
+
+class pygments.lexers.compiled.GoLexer
+Short names:	go
+Filenames:	*.go
+MIME types:	text/x-gosrc
+For Go source.
+
+class pygments.lexers.compiled.LogosLexer
+Short names:	logos
+Filenames:	*.x, *.xi, *.xm, *.xmi
+MIME types:	text/x-logos
+For Logos + Objective-C source code with preprocessor directives.
+
+New in Pygments 1.6.
+
+class pygments.lexers.compiled.Modula2Lexer
+Short names:	modula2, m2
+Filenames:	*.def, *.mod
+MIME types:	text/x-modula2
+For Modula-2 source code.
+
+Additional options that determine which keywords are highlighted:
+
+pim
+Select PIM Modula-2 dialect (default: True).
+iso
+Select ISO Modula-2 dialect (default: False).
+objm2
+Select Objective Modula-2 dialect (default: False).
+gm2ext
+Also highlight GNU extensions (default: False).
+New in Pygments 1.3.
+
+class pygments.lexers.compiled.MonkeyLexer
+Short names:	monkey
+Filenames:	*.monkey
+MIME types:	text/x-monkey
+For Monkey source code.
+
+New in Pygments 1.6.
+
+class pygments.lexers.compiled.NesCLexer
+Short names:	nesc
+Filenames:	*.nc
+MIME types:	text/x-nescsrc
+For nesC source code with preprocessor directives.
+
+New in Pygments 1.7.
+
+class pygments.lexers.compiled.NimrodLexer
+Short names:	nimrod, nim
+Filenames:	*.nim, *.nimrod
+MIME types:	text/x-nimrod
+For Nimrod source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.compiled.ObjectiveCLexer
+Short names:	objective-c, objectivec, obj-c, objc
+Filenames:	*.m, *.h
+MIME types:	text/x-objective-c
+For Objective-C source code with preprocessor directives.
+
+class pygments.lexers.compiled.ObjectiveCppLexer
+Short names:	objective-c++, objectivec++, obj-c++, objc++
+Filenames:	*.mm, *.hh
+MIME types:	text/x-objective-c++
+For Objective-C++ source code with preprocessor directives.
+
+class pygments.lexers.compiled.OocLexer
+Short names:	ooc
+Filenames:	*.ooc
+MIME types:	text/x-ooc
+For Ooc source code
+
+New in Pygments 1.2.
+
+class pygments.lexers.compiled.PikeLexer
+Short names:	pike
+Filenames:	*.pike, *.pmod
+MIME types:	text/x-pike
+For Pike source code.
+
+New in Pygments 1.7.
+
+class pygments.lexers.compiled.PrologLexer
+Short names:	prolog
+Filenames:	*.prolog, *.pro, *.pl
+MIME types:	text/x-prolog
+Lexer for Prolog files.
+
+class pygments.lexers.compiled.RustLexer
+Short names:	rust
+Filenames:	*.rs, *.rc
+MIME types:	text/x-rustsrc
+Lexer for Mozilla’s Rust programming language.
+
+New in Pygments 1.6.
+
+class pygments.lexers.compiled.SwigLexer
+Short names:	swig
+Filenames:	*.swg, *.i
+MIME types:	text/swig
+For SWIG source code.
+
+New in Pygments 1.7.
+
+class pygments.lexers.compiled.ValaLexer
+Short names:	vala, vapi
+Filenames:	*.vala, *.vapi
+MIME types:	text/x-vala
+For Vala source code with preprocessor directives.
+
+New in Pygments 1.1.
+
+Pygments lexers for Dalvik VM-related languages
+
+class pygments.lexers.dalvik.SmaliLexer
+Short names:	smali
+Filenames:	*.smali
+MIME types:	text/smali
+For Smali (Android/Dalvik) assembly code.
+
+New in Pygments 1.6.
+
+Lexers for .net languages
+
+class pygments.lexers.dotnet.BooLexer
+Short names:	boo
+Filenames:	*.boo
+MIME types:	text/x-boo
+For Boo source code.
+
+class pygments.lexers.dotnet.CSharpAspxLexer
+Short names:	aspx-cs
+Filenames:	*.aspx, *.asax, *.ascx, *.ashx, *.asmx, *.axd
+MIME types:	None
+Lexer for highligting C# within ASP.NET pages.
+
+class pygments.lexers.dotnet.CSharpLexer
+Short names:	csharp, c#
+Filenames:	*.cs
+MIME types:	text/x-csharp
+For C# source code.
+
+Additional options accepted:
+
+unicodelevel
+Determines which Unicode characters this lexer allows for identifiers. The possible values are:
+
+none – only the ASCII letters and numbers are allowed. This is the fastest selection.
+basic – all Unicode characters from the specification except category Lo are allowed.
+full – all Unicode characters as specified in the C# specs are allowed. Note that this means a considerable slowdown since the Lo category has more than 40,000 characters in it!
+The default value is basic.
+
+New in Pygments 0.8.
+
+class pygments.lexers.dotnet.FSharpLexer
+Short names:	fsharp
+Filenames:	*.fs, *.fsi
+MIME types:	text/x-fsharp
+For the F# language (version 3.0).
+
+New in Pygments 1.5.
+
+class pygments.lexers.dotnet.NemerleLexer
+Short names:	nemerle
+Filenames:	*.n
+MIME types:	text/x-nemerle
+For Nemerle source code.
+
+Additional options accepted:
+
+unicodelevel
+Determines which Unicode characters this lexer allows for identifiers. The possible values are:
+
+none – only the ASCII letters and numbers are allowed. This is the fastest selection.
+basic – all Unicode characters from the specification except category Lo are allowed.
+full – all Unicode characters as specified in the C# specs are allowed. Note that this means a considerable slowdown since the Lo category has more than 40,000 characters in it!
+The default value is basic.
+
+New in Pygments 1.5.
+
+class pygments.lexers.dotnet.VbNetAspxLexer
+Short names:	aspx-vb
+Filenames:	*.aspx, *.asax, *.ascx, *.ashx, *.asmx, *.axd
+MIME types:	None
+Lexer for highligting Visual Basic.net within ASP.NET pages.
+
+class pygments.lexers.dotnet.VbNetLexer
+Short names:	vb.net, vbnet
+Filenames:	*.vb, *.bas
+MIME types:	text/x-vbnet, text/x-vba
+For Visual Basic.NET source code.
+
+Simple lexer for Microsoft Visual FoxPro source code
+
+class pygments.lexers.foxpro.FoxProLexer
+Short names:	foxpro, vfp, clipper, xbase
+Filenames:	*.PRG, *.prg
+MIME types:	None
+Lexer for Microsoft Visual FoxPro language.
+
+FoxPro syntax allows to shorten all keywords and function names to 4 characters. Shortened forms are not recognized by this lexer.
+
+New in Pygments 1.6.
+
+Lexers for functional languages
+
+class pygments.lexers.functional.AgdaLexer
+Short names:	agda
+Filenames:	*.agda
+MIME types:	text/x-agda
+For the Agda dependently typed functional programming language and proof assistant.
+
+New in Pygments 1.7.
+
+class pygments.lexers.functional.CommonLispLexer
+Short names:	common-lisp, cl, lisp
+Filenames:	*.cl, *.lisp, *.el
+MIME types:	text/x-common-lisp
+A Common Lisp lexer.
+
+New in Pygments 0.9.
+
+class pygments.lexers.functional.CoqLexer
+Short names:	coq
+Filenames:	*.v
+MIME types:	text/x-coq
+For the Coq theorem prover.
+
+New in Pygments 1.5.
+
+class pygments.lexers.functional.ElixirConsoleLexer
+Short names:	iex
+Filenames:	None
+MIME types:	text/x-elixir-shellsession
+For Elixir interactive console (iex) output like:
+
+iex> [head | tail] = [1,2,3]
+[1,2,3]
+iex> head
+1
+iex> tail
+[2,3]
+iex> [head | tail]
+[1,2,3]
+iex> length [head | tail]
+3
+New in Pygments 1.5.
+
+class pygments.lexers.functional.ElixirLexer
+Short names:	elixir, ex, exs
+Filenames:	*.ex, *.exs
+MIME types:	text/x-elixir
+For the Elixir language.
+
+New in Pygments 1.5.
+
+class pygments.lexers.functional.ErlangLexer
+Short names:	erlang
+Filenames:	*.erl, *.hrl, *.es, *.escript
+MIME types:	text/x-erlang
+For the Erlang functional programming language.
+
+Blame Jeremy Thurgood (http://jerith.za.net/).
+
+New in Pygments 0.9.
+
+class pygments.lexers.functional.ErlangShellLexer
+Short names:	erl
+Filenames:	*.erl-sh
+MIME types:	text/x-erl-shellsession
+Shell sessions in erl (for Erlang code).
+
+New in Pygments 1.1.
+
+class pygments.lexers.functional.HaskellLexer
+Short names:	haskell, hs
+Filenames:	*.hs
+MIME types:	text/x-haskell
+A Haskell lexer based on the lexemes defined in the Haskell 98 Report.
+
+New in Pygments 0.8.
+
+class pygments.lexers.functional.KokaLexer
+Short names:	koka
+Filenames:	*.kk, *.kki
+MIME types:	text/x-koka
+Lexer for the Koka language.
+
+New in Pygments 1.6.
+
+class pygments.lexers.functional.LiterateAgdaLexer
+Short names:	lagda, literate-agda
+Filenames:	*.lagda
+MIME types:	text/x-literate-agda
+For Literate Agda source.
+
+Additional options accepted:
+
+litstyle
+If given, must be "bird" or "latex". If not given, the style is autodetected: if the first non-whitespace character in the source is a backslash or percent character, LaTeX is assumed, else Bird.
+New in Pygments 1.7.
+
+class pygments.lexers.functional.LiterateHaskellLexer
+Short names:	lhs, literate-haskell, lhaskell
+Filenames:	*.lhs
+MIME types:	text/x-literate-haskell
+For Literate Haskell (Bird-style or LaTeX) source.
+
+Additional options accepted:
+
+litstyle
+If given, must be "bird" or "latex". If not given, the style is autodetected: if the first non-whitespace character in the source is a backslash or percent character, LaTeX is assumed, else Bird.
+New in Pygments 0.9.
+
+class pygments.lexers.functional.NewLispLexer
+Short names:	newlisp
+Filenames:	*.lsp, *.nl
+MIME types:	text/x-newlisp, application/x-newlisp
+For newLISP. source code (version 10.3.0).
+
+New in Pygments 1.5.
+
+class pygments.lexers.functional.NixLexer
+Short names:	nixos, nix
+Filenames:	*.nix
+MIME types:	text/x-nix
+For the Nix language.
+
+New in Pygments 1.7.
+
+class pygments.lexers.functional.OcamlLexer
+Short names:	ocaml
+Filenames:	*.ml, *.mli, *.mll, *.mly
+MIME types:	text/x-ocaml
+For the OCaml language.
+
+New in Pygments 0.7.
+
+class pygments.lexers.functional.OpaLexer
+Short names:	opa
+Filenames:	*.opa
+MIME types:	text/x-opa
+Lexer for the Opa language (http://opalang.org).
+
+New in Pygments 1.5.
+
+class pygments.lexers.functional.RacketLexer
+Short names:	racket, rkt
+Filenames:	*.rkt, *.rktl
+MIME types:	text/x-racket, application/x-racket
+Lexer for Racket source code (formerly known as PLT Scheme).
+
+New in Pygments 1.6.
+
+class pygments.lexers.functional.SMLLexer
+Short names:	sml
+Filenames:	*.sml, *.sig, *.fun
+MIME types:	text/x-standardml, application/x-standardml
+For the Standard ML language.
+
+New in Pygments 1.5.
+
+class pygments.lexers.functional.SchemeLexer
+Short names:	scheme, scm
+Filenames:	*.scm, *.ss
+MIME types:	text/x-scheme, application/x-scheme
+A Scheme lexer, parsing a stream and outputting the tokens needed to highlight scheme code. This lexer could be most probably easily subclassed to parse other LISP-Dialects like Common Lisp, Emacs Lisp or AutoLisp.
+
+This parser is checked with pastes from the LISP pastebin at http://paste.lisp.org/ to cover as much syntax as possible.
+
+It supports the full Scheme syntax as defined in R5RS.
+
+New in Pygments 0.6.
+
+Lexers for hardware descriptor languages
+
+class pygments.lexers.hdl.SystemVerilogLexer
+Short names:	systemverilog, sv
+Filenames:	*.sv, *.svh
+MIME types:	text/x-systemverilog
+Extends verilog lexer to recognise all SystemVerilog keywords from IEEE 1800-2009 standard.
+
+New in Pygments 1.5.
+
+class pygments.lexers.hdl.VerilogLexer
+Short names:	verilog, v
+Filenames:	*.v
+MIME types:	text/x-verilog
+For verilog source code with preprocessor directives.
+
+New in Pygments 1.4.
+
+class pygments.lexers.hdl.VhdlLexer
+Short names:	vhdl
+Filenames:	*.vhdl, *.vhd
+MIME types:	text/x-vhdl
+For VHDL source code.
+
+New in Pygments 1.5.
+
+Pygments lexers for JVM languages
+
+class pygments.lexers.jvm.AspectJLexer
+Short names:	aspectj
+Filenames:	*.aj
+MIME types:	text/x-aspectj
+For AspectJ source code.
+
+New in Pygments 1.6.
+
+class pygments.lexers.jvm.CeylonLexer
+Short names:	ceylon
+Filenames:	*.ceylon
+MIME types:	text/x-ceylon
+For Ceylon source code.
+
+New in Pygments 1.6.
+
+class pygments.lexers.jvm.ClojureLexer
+Short names:	clojure, clj
+Filenames:	*.clj
+MIME types:	text/x-clojure, application/x-clojure
+Lexer for Clojure source code.
+
+New in Pygments 0.11.
+
+class pygments.lexers.jvm.GosuLexer
+Short names:	gosu
+Filenames:	*.gs, *.gsx, *.gsp, *.vark
+MIME types:	text/x-gosu
+For Gosu source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.jvm.GosuTemplateLexer
+Short names:	gst
+Filenames:	*.gst
+MIME types:	text/x-gosu-template
+For Gosu templates.
+
+New in Pygments 1.5.
+
+class pygments.lexers.jvm.GroovyLexer
+Short names:	groovy
+Filenames:	*.groovy
+MIME types:	text/x-groovy
+For Groovy source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.jvm.IokeLexer
+Short names:	ioke, ik
+Filenames:	*.ik
+MIME types:	text/x-iokesrc
+For Ioke (a strongly typed, dynamic, prototype based programming language) source.
+
+New in Pygments 1.4.
+
+class pygments.lexers.jvm.JavaLexer
+Short names:	java
+Filenames:	*.java
+MIME types:	text/x-java
+For Java source code.
+
+class pygments.lexers.jvm.KotlinLexer
+Short names:	kotlin
+Filenames:	*.kt
+MIME types:	text/x-kotlin
+For Kotlin source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.jvm.ScalaLexer
+Short names:	scala
+Filenames:	*.scala
+MIME types:	text/x-scala
+For Scala source code.
+
+class pygments.lexers.jvm.XtendLexer
+Short names:	xtend
+Filenames:	*.xtend
+MIME types:	text/x-xtend
+For Xtend source code.
+
+New in Pygments 1.6.
+
+Lexers for math languages
+
+class pygments.lexers.math.BugsLexer
+Short names:	bugs, winbugs, openbugs
+Filenames:	*.bug
+MIME types:	None
+Pygments Lexer for OpenBugs and WinBugs models.
+
+New in Pygments 1.6.
+
+class pygments.lexers.math.IDLLexer
+Short names:	idl
+Filenames:	*.pro
+MIME types:	text/idl
+Pygments Lexer for IDL (Interactive Data Language).
+
+New in Pygments 1.6.
+
+class pygments.lexers.math.IgorLexer
+Short names:	igor, igorpro
+Filenames:	*.ipf
+MIME types:	text/ipf
+Pygments Lexer for Igor Pro procedure files (.ipf). See http://www.wavemetrics.com/ and http://www.igorexchange.com/.
+
+New in Pygments 1.7.
+
+class pygments.lexers.math.JagsLexer
+Short names:	jags
+Filenames:	*.jag, *.bug
+MIME types:	None
+Pygments Lexer for JAGS.
+
+New in Pygments 1.6.
+
+class pygments.lexers.math.JuliaConsoleLexer
+Short names:	jlcon
+Filenames:	None
+MIME types:	None
+For Julia console sessions. Modeled after MatlabSessionLexer.
+
+New in Pygments 1.6.
+
+class pygments.lexers.math.JuliaLexer
+Short names:	julia, jl
+Filenames:	*.jl
+MIME types:	text/x-julia, application/x-julia
+For Julia source code.
+
+New in Pygments 1.6.
+
+class pygments.lexers.math.MathematicaLexer
+Short names:	mathematica, mma, nb
+Filenames:	*.nb, *.cdf, *.nbp, *.ma
+MIME types:	application/mathematica, application/vnd.wolfram.mathematica, application/vnd.wolfram.mathematica.package, application/vnd.wolfram.cdf
+Lexer for Mathematica source code.
+
+New in Pygments 1.7.
+
+class pygments.lexers.math.MatlabLexer
+Short names:	matlab
+Filenames:	*.m
+MIME types:	text/matlab
+For Matlab source code.
+
+New in Pygments 0.10.
+
+class pygments.lexers.math.MatlabSessionLexer
+Short names:	matlabsession
+Filenames:	None
+MIME types:	None
+For Matlab sessions. Modeled after PythonConsoleLexer. Contributed by Ken Schutte <kschutte@csail.mit.edu>.
+
+New in Pygments 0.10.
+
+class pygments.lexers.math.MuPADLexer
+Short names:	mupad
+Filenames:	*.mu
+MIME types:	None
+A MuPAD lexer. Contributed by Christopher Creutzig <christopher@creutzig.de>.
+
+New in Pygments 0.8.
+
+class pygments.lexers.math.NumPyLexer
+Short names:	numpy
+Filenames:	None
+MIME types:	None
+A Python lexer recognizing Numerical Python builtins.
+
+New in Pygments 0.10.
+
+class pygments.lexers.math.OctaveLexer
+Short names:	octave
+Filenames:	*.m
+MIME types:	text/octave
+For GNU Octave source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.math.RConsoleLexer
+Short names:	rconsole, rout
+Filenames:	*.Rout
+MIME types:	None
+For R console transcripts or R CMD BATCH output files.
+
+class pygments.lexers.math.RdLexer
+Short names:	rd
+Filenames:	*.Rd
+MIME types:	text/x-r-doc
+Pygments Lexer for R documentation (Rd) files
+
+This is a very minimal implementation, highlighting little more than the macros. A description of Rd syntax is found in Writing R Extensions and Parsing Rd files.
+
+New in Pygments 1.6.
+
+class pygments.lexers.math.SLexer
+Short names:	splus, s, r
+Filenames:	*.S, *.R, .Rhistory, .Rprofile
+MIME types:	text/S-plus, text/S, text/x-r-source, text/x-r, text/x-R, text/x-r-history, text/x-r-profile
+For S, S-plus, and R source code.
+
+New in Pygments 0.10.
+
+class pygments.lexers.math.ScilabLexer
+Short names:	scilab
+Filenames:	*.sci, *.sce, *.tst
+MIME types:	text/scilab
+For Scilab source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.math.StanLexer
+Short names:	stan
+Filenames:	*.stan
+MIME types:	None
+Pygments Lexer for Stan models.
+
+The Stan modeling language is specified in the Stan 2.0.1 Modeling Language Manual pdf
+
+New in Pygments 1.6.
+
+Lexers for other languages
+
+class pygments.lexers.other.ABAPLexer
+Short names:	abap
+Filenames:	*.abap
+MIME types:	text/x-abap
+Lexer for ABAP, SAP’s integrated language.
+
+New in Pygments 1.1.
+
+class pygments.lexers.other.AppleScriptLexer
+Short names:	applescript
+Filenames:	*.applescript
+MIME types:	None
+For AppleScript source code, including AppleScript Studio. Contributed by Andreas Amann <aamann@mac.com>.
+
+class pygments.lexers.other.AsymptoteLexer
+Short names:	asy, asymptote
+Filenames:	*.asy
+MIME types:	text/x-asymptote
+For Asymptote source code.
+
+New in Pygments 1.2.
+
+class pygments.lexers.other.AutoItLexer
+Short names:	autoit
+Filenames:	*.au3
+MIME types:	text/x-autoit
+For AutoIt files.
+
+AutoIt is a freeware BASIC-like scripting language designed for automating the Windows GUI and general scripting
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.AutohotkeyLexer
+Short names:	ahk, autohotkey
+Filenames:	*.ahk, *.ahkl
+MIME types:	text/x-autohotkey
+For autohotkey source code.
+
+New in Pygments 1.4.
+
+class pygments.lexers.other.AwkLexer
+Short names:	awk, gawk, mawk, nawk
+Filenames:	*.awk
+MIME types:	application/x-awk
+For Awk scripts.
+
+New in Pygments 1.5.
+
+class pygments.lexers.other.BefungeLexer
+Short names:	befunge
+Filenames:	*.befunge
+MIME types:	application/x-befunge
+Lexer for the esoteric Befunge language.
+
+New in Pygments 0.7.
+
+class pygments.lexers.other.BrainfuckLexer
+Short names:	brainfuck, bf
+Filenames:	*.bf, *.b
+MIME types:	application/x-brainfuck
+Lexer for the esoteric BrainFuck language.
+
+class pygments.lexers.other.BroLexer
+Short names:	bro
+Filenames:	*.bro
+MIME types:	None
+For Bro scripts.
+
+New in Pygments 1.5.
+
+class pygments.lexers.other.CbmBasicV2Lexer
+Short names:	cbmbas
+Filenames:	*.bas
+MIME types:	None
+For CBM BASIC V2 sources.
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.Cfengine3Lexer
+Short names:	cfengine3, cf3
+Filenames:	*.cf
+MIME types:	None
+Lexer for CFEngine3 policy files.
+
+New in Pygments 1.5.
+
+class pygments.lexers.other.ECLLexer
+Short names:	ecl
+Filenames:	*.ecl
+MIME types:	application/x-ecl
+Lexer for the declarative big-data ECL language.
+
+New in Pygments 1.5.
+
+class pygments.lexers.other.GherkinLexer
+Short names:	cucumber, gherkin
+Filenames:	*.feature
+MIME types:	text/x-gherkin
+For Gherkin <http://github.com/aslakhellesoy/gherkin/> syntax.
+
+New in Pygments 1.2.
+
+class pygments.lexers.other.GnuplotLexer
+Short names:	gnuplot
+Filenames:	*.plot, *.plt
+MIME types:	text/x-gnuplot
+For Gnuplot plotting scripts.
+
+New in Pygments 0.11.
+
+class pygments.lexers.other.GoodDataCLLexer
+Short names:	gooddata-cl
+Filenames:	*.gdc
+MIME types:	text/x-gooddata-cl
+Lexer for GoodData-CL script files.
+
+New in Pygments 1.4.
+
+class pygments.lexers.other.HybrisLexer
+Short names:	hybris, hy
+Filenames:	*.hy, *.hyb
+MIME types:	text/x-hybris, application/x-hybris
+For Hybris source code.
+
+New in Pygments 1.4.
+
+class pygments.lexers.other.KconfigLexer
+Short names:	kconfig, menuconfig, linux-config, kernel-config
+Filenames:	Kconfig, *Config.in*, external.in*, standard-modules.in
+MIME types:	text/x-kconfig
+For Linux-style Kconfig files.
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.LogtalkLexer
+Short names:	logtalk
+Filenames:	*.lgt
+MIME types:	text/x-logtalk
+For Logtalk source code.
+
+New in Pygments 0.10.
+
+class pygments.lexers.other.MOOCodeLexer
+Short names:	moocode, moo
+Filenames:	*.moo
+MIME types:	text/x-moocode
+For MOOCode (the MOO scripting language).
+
+New in Pygments 0.9.
+
+class pygments.lexers.other.MaqlLexer
+Short names:	maql
+Filenames:	*.maql
+MIME types:	text/x-gooddata-maql, application/x-gooddata-maql
+Lexer for GoodData MAQL scripts.
+
+New in Pygments 1.4.
+
+class pygments.lexers.other.ModelicaLexer
+Short names:	modelica
+Filenames:	*.mo
+MIME types:	text/x-modelica
+For Modelica source code.
+
+New in Pygments 1.1.
+
+class pygments.lexers.other.MscgenLexer
+Short names:	mscgen, msc
+Filenames:	*.msc
+MIME types:	None
+For Mscgen files.
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.NSISLexer
+Short names:	nsis, nsi, nsh
+Filenames:	*.nsi, *.nsh
+MIME types:	text/x-nsis
+For NSIS scripts.
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.NewspeakLexer
+Short names:	newspeak
+Filenames:	*.ns2
+MIME types:	text/x-newspeak
+For Newspeak <http://newspeaklanguage.org/> syntax.
+
+class pygments.lexers.other.OpenEdgeLexer
+Short names:	openedge, abl, progress
+Filenames:	*.p, *.cls
+MIME types:	text/x-openedge, application/x-openedge
+Lexer for OpenEdge ABL (formerly Progress) source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.other.PostScriptLexer
+Short names:	postscript, postscr
+Filenames:	*.ps, *.eps
+MIME types:	application/postscript
+Lexer for PostScript files.
+
+The PostScript Language Reference published by Adobe at <http://partners.adobe.com/public/developer/en/ps/PLRM.pdf> is the authority for this.
+
+New in Pygments 1.4.
+
+class pygments.lexers.other.PovrayLexer
+Short names:	pov
+Filenames:	*.pov, *.inc
+MIME types:	text/x-povray
+For Persistence of Vision Raytracer files.
+
+New in Pygments 0.11.
+
+class pygments.lexers.other.ProtoBufLexer
+Short names:	protobuf, proto
+Filenames:	*.proto
+MIME types:	None
+Lexer for Protocol Buffer definition files.
+
+New in Pygments 1.4.
+
+class pygments.lexers.other.PuppetLexer
+Short names:	puppet
+Filenames:	*.pp
+MIME types:	None
+For Puppet configuration DSL.
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.RPMSpecLexer
+Short names:	spec
+Filenames:	*.spec
+MIME types:	text/x-rpm-spec
+For RPM .spec files.
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.RebolLexer
+Short names:	rebol
+Filenames:	*.r, *.r3
+MIME types:	text/x-rebol
+A REBOL lexer.
+
+New in Pygments 1.1.
+
+class pygments.lexers.other.RedcodeLexer
+Short names:	redcode
+Filenames:	*.cw
+MIME types:	None
+A simple Redcode lexer based on ICWS‘94. Contributed by Adam Blinkinsop <blinks@acm.org>.
+
+New in Pygments 0.8.
+
+class pygments.lexers.other.RexxLexer
+Short names:	rexx, arexx
+Filenames:	*.rexx, *.rex, *.rx, *.arexx
+MIME types:	text/x-rexx
+Rexx is a scripting language available for a wide range of different platforms with its roots found on mainframe systems. It is popular for I/O- and data based tasks and can act as glue language to bind different applications together.
+
+New in Pygments 1.7.
+
+class pygments.lexers.other.RobotFrameworkLexer
+Short names:	robotframework
+Filenames:	*.txt, *.robot
+MIME types:	text/x-robotframework
+For Robot Framework test data.
+
+Supports both space and pipe separated plain text formats.
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.SmalltalkLexer
+Short names:	smalltalk, squeak, st
+Filenames:	*.st
+MIME types:	text/x-smalltalk
+For Smalltalk syntax. Contributed by Stefan Matthias Aust. Rewritten by Nils Winter.
+
+New in Pygments 0.10.
+
+class pygments.lexers.other.SnobolLexer
+Short names:	snobol
+Filenames:	*.snobol
+MIME types:	text/x-snobol
+Lexer for the SNOBOL4 programming language.
+
+Recognizes the common ASCII equivalents of the original SNOBOL4 operators. Does not require spaces around binary operators.
+
+New in Pygments 1.5.
+
+class pygments.lexers.other.SourcePawnLexer
+Short names:	sp
+Filenames:	*.sp
+MIME types:	text/x-sourcepawn
+For SourcePawn source code with preprocessor directives.
+
+New in Pygments 1.6.
+
+class pygments.lexers.other.UrbiscriptLexer
+Short names:	urbiscript
+Filenames:	*.u
+MIME types:	application/x-urbiscript
+For UrbiScript source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.other.VGLLexer
+Short names:	vgl
+Filenames:	*.rpf
+MIME types:	None
+For SampleManager VGL source code.
+
+New in Pygments 1.6.
+
+Lexers for parser generators
+
+class pygments.lexers.parsers.AntlrActionScriptLexer
+Short names:	antlr-as, antlr-actionscript
+Filenames:	*.G, *.g
+MIME types:	None
+ANTLR with ActionScript Target
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.AntlrCSharpLexer
+Short names:	antlr-csharp, antlr-c#
+Filenames:	*.G, *.g
+MIME types:	None
+ANTLR with C# Target
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.AntlrCppLexer
+Short names:	antlr-cpp
+Filenames:	*.G, *.g
+MIME types:	None
+ANTLR with CPP Target
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.AntlrJavaLexer
+Short names:	antlr-java
+Filenames:	*.G, *.g
+MIME types:	None
+ANTLR with Java Target
+
+New in Pygments 1.1
+
+class pygments.lexers.parsers.AntlrLexer
+Short names:	antlr
+Filenames:	None
+MIME types:	None
+Generic ANTLR Lexer. Should not be called directly, instead use DelegatingLexer for your target language.
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.AntlrObjectiveCLexer
+Short names:	antlr-objc
+Filenames:	*.G, *.g
+MIME types:	None
+ANTLR with Objective-C Target
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.AntlrPerlLexer
+Short names:	antlr-perl
+Filenames:	*.G, *.g
+MIME types:	None
+ANTLR with Perl Target
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.AntlrPythonLexer
+Short names:	antlr-python
+Filenames:	*.G, *.g
+MIME types:	None
+ANTLR with Python Target
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.AntlrRubyLexer
+Short names:	antlr-ruby, antlr-rb
+Filenames:	*.G, *.g
+MIME types:	None
+ANTLR with Ruby Target
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.RagelCLexer
+Short names:	ragel-c
+Filenames:	*.rl
+MIME types:	None
+A lexer for Ragel in a C host file.
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.RagelCppLexer
+Short names:	ragel-cpp
+Filenames:	*.rl
+MIME types:	None
+A lexer for Ragel in a CPP host file.
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.RagelDLexer
+Short names:	ragel-d
+Filenames:	*.rl
+MIME types:	None
+A lexer for Ragel in a D host file.
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.RagelEmbeddedLexer
+Short names:	ragel-em
+Filenames:	*.rl
+MIME types:	None
+A lexer for Ragel embedded in a host language file.
+
+This will only highlight Ragel statements. If you want host language highlighting then call the language-specific Ragel lexer.
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.RagelJavaLexer
+Short names:	ragel-java
+Filenames:	*.rl
+MIME types:	None
+A lexer for Ragel in a Java host file.
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.RagelLexer
+Short names:	ragel
+Filenames:	None
+MIME types:	None
+A pure Ragel lexer. Use this for fragments of Ragel. For .rl files, use RagelEmbeddedLexer instead (or one of the language-specific subclasses).
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.RagelObjectiveCLexer
+Short names:	ragel-objc
+Filenames:	*.rl
+MIME types:	None
+A lexer for Ragel in an Objective C host file.
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.RagelRubyLexer
+Short names:	ragel-ruby, ragel-rb
+Filenames:	*.rl
+MIME types:	None
+A lexer for Ragel in a Ruby host file.
+
+New in Pygments 1.1.
+
+class pygments.lexers.parsers.TreetopLexer
+Short names:	treetop
+Filenames:	*.treetop, *.tt
+MIME types:	None
+A lexer for Treetop grammars.
+
+New in Pygments 1.6.
+
+Lexers for various shells
+
+class pygments.lexers.shell.BashLexer
+Short names:	bash, sh, ksh
+Filenames:	*.sh, *.ksh, *.bash, *.ebuild, *.eclass, .bashrc, bashrc, .bash\*, bash\*, PKGBUILD
+MIME types:	application/x-sh, application/x-shellscript
+Lexer for (ba|k|)sh shell scripts.
+
+New in Pygments 0.6.
+
+class pygments.lexers.shell.BashSessionLexer
+Short names:	console
+Filenames:	*.sh-session
+MIME types:	application/x-shell-session
+Lexer for simplistic shell sessions.
+
+New in Pygments 1.1.
+
+class pygments.lexers.shell.BatchLexer
+Short names:	bat, batch, dosbatch, winbatch
+Filenames:	*.bat, *.cmd
+MIME types:	application/x-dos-batch
+Lexer for the DOS/Windows Batch file format.
+
+New in Pygments 0.7.
+
+class pygments.lexers.shell.PowerShellLexer
+Short names:	powershell, posh, ps1, psm1
+Filenames:	*.ps1, *.psm1
+MIME types:	text/x-powershell
+For Windows PowerShell code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.shell.ShellSessionLexer
+Short names:	shell-session
+Filenames:	*.shell-session
+MIME types:	application/x-sh-session
+Lexer for shell sessions that works with different command prompts
+
+New in Pygments 1.6.
+
+class pygments.lexers.shell.TcshLexer
+Short names:	tcsh, csh
+Filenames:	*.tcsh, *.csh
+MIME types:	application/x-csh
+Lexer for tcsh scripts.
+
+New in Pygments 0.10.
+
+Special lexers
+
+class pygments.lexers.special.RawTokenLexer
+Short names:	raw
+Filenames:	None
+MIME types:	application/x-pygments-tokens
+Recreate a token stream formatted with the RawTokenFormatter. This lexer raises exceptions during parsing if the token stream in the file is malformed.
+
+Additional options accepted:
+
+compress
+If set to "gz" or "bz2", decompress the token stream with the given compression algorithm before lexing (default: "").
+class pygments.lexers.special.TextLexer
+Short names:	text
+Filenames:	*.txt
+MIME types:	text/plain
+“Null” lexer, doesn’t highlight anything.
+
+Lexers for various SQL dialects and related interactive sessions
+
+class pygments.lexers.sql.MySqlLexer
+Short names:	mysql
+Filenames:	None
+MIME types:	text/x-mysql
+Special lexer for MySQL.
+
+class pygments.lexers.sql.PlPgsqlLexer
+Short names:	plpgsql
+Filenames:	None
+MIME types:	text/x-plpgsql
+Handle the extra syntax in Pl/pgSQL language.
+
+New in Pygments 1.5.
+
+class pygments.lexers.sql.PostgresConsoleLexer
+Short names:	psql, postgresql-console, postgres-console
+Filenames:	None
+MIME types:	text/x-postgresql-psql
+Lexer for psql sessions.
+
+New in Pygments 1.5.
+
+class pygments.lexers.sql.PostgresLexer
+Short names:	postgresql, postgres
+Filenames:	None
+MIME types:	text/x-postgresql
+Lexer for the PostgreSQL dialect of SQL.
+
+New in Pygments 1.5.
+
+class pygments.lexers.sql.SqlLexer
+Short names:	sql
+Filenames:	*.sql
+MIME types:	text/x-sql
+Lexer for Structured Query Language. Currently, this lexer does not recognize any special syntax except ANSI SQL.
+
+class pygments.lexers.sql.SqliteConsoleLexer
+Short names:	sqlite3
+Filenames:	*.sqlite3-console
+MIME types:	text/x-sqlite3-console
+Lexer for example sessions using sqlite3.
+
+New in Pygments 0.11.
+
+Lexers for various template engines’ markup
+
+class pygments.lexers.templates.CheetahHtmlLexer
+Short names:	html+cheetah, html+spitfire, htmlcheetah
+Filenames:	None
+MIME types:	text/html+cheetah, text/html+spitfire
+Subclass of the CheetahLexer that highlights unlexer data with the HtmlLexer.
+
+class pygments.lexers.templates.CheetahJavascriptLexer
+Short names:	js+cheetah, javascript+cheetah, js+spitfire, javascript+spitfire
+Filenames:	None
+MIME types:	application/x-javascript+cheetah, text/x-javascript+cheetah, text/javascript+cheetah, application/x-javascript+spitfire, text/x-javascript+spitfire, text/javascript+spitfire
+Subclass of the CheetahLexer that highlights unlexer data with the JavascriptLexer.
+
+class pygments.lexers.templates.CheetahLexer
+Short names:	cheetah, spitfire
+Filenames:	*.tmpl, *.spt
+MIME types:	application/x-cheetah, application/x-spitfire
+Generic cheetah templates lexer. Code that isn’t Cheetah markup is yielded as Token.Other. This also works for spitfire templates which use the same syntax.
+
+class pygments.lexers.templates.CheetahXmlLexer
+Short names:	xml+cheetah, xml+spitfire
+Filenames:	None
+MIME types:	application/xml+cheetah, application/xml+spitfire
+Subclass of the CheetahLexer that highlights unlexer data with the XmlLexer.
+
+class pygments.lexers.templates.ColdfusionHtmlLexer
+Short names:	cfm
+Filenames:	*.cfm, *.cfml, *.cfc
+MIME types:	application/x-coldfusion
+Coldfusion markup in html
+
+class pygments.lexers.templates.ColdfusionLexer
+Short names:	cfs
+Filenames:	None
+MIME types:	None
+Coldfusion statements
+
+class pygments.lexers.templates.CssDjangoLexer
+Short names:	css+django, css+jinja
+Filenames:	None
+MIME types:	text/css+django, text/css+jinja
+Subclass of the DjangoLexer that highlights unlexed data with the CssLexer.
+
+class pygments.lexers.templates.CssErbLexer
+Short names:	css+erb, css+ruby
+Filenames:	None
+MIME types:	text/css+ruby
+Subclass of ErbLexer which highlights unlexed data with the CssLexer.
+
+class pygments.lexers.templates.CssGenshiLexer
+Short names:	css+genshitext, css+genshi
+Filenames:	None
+MIME types:	text/css+genshi
+A lexer that highlights CSS definitions in genshi text templates.
+
+class pygments.lexers.templates.CssPhpLexer
+Short names:	css+php
+Filenames:	None
+MIME types:	text/css+php
+Subclass of PhpLexer which highlights unmatched data with the CssLexer.
+
+class pygments.lexers.templates.CssSmartyLexer
+Short names:	css+smarty
+Filenames:	None
+MIME types:	text/css+smarty
+Subclass of the SmartyLexer that highlights unlexed data with the CssLexer.
+
+class pygments.lexers.templates.DjangoLexer
+Short names:	django, jinja
+Filenames:	None
+MIME types:	application/x-django-templating, application/x-jinja
+Generic django and jinja template lexer.
+
+It just highlights django/jinja code between the preprocessor directives, other data is left untouched by the lexer.
+
+class pygments.lexers.templates.ErbLexer
+Short names:	erb
+Filenames:	None
+MIME types:	application/x-ruby-templating
+Generic ERB (Ruby Templating) lexer.
+
+Just highlights ruby code between the preprocessor directives, other data is left untouched by the lexer.
+
+All options are also forwarded to the RubyLexer.
+
+class pygments.lexers.templates.EvoqueHtmlLexer
+Short names:	html+evoque
+Filenames:	*.html
+MIME types:	text/html+evoque
+Subclass of the EvoqueLexer that highlights unlexed data with the HtmlLexer.
+
+New in Pygments 1.1.
+
+class pygments.lexers.templates.EvoqueLexer
+Short names:	evoque
+Filenames:	*.evoque
+MIME types:	application/x-evoque
+For files using the Evoque templating system.
+
+New in Pygments 1.1.
+
+class pygments.lexers.templates.EvoqueXmlLexer
+Short names:	xml+evoque
+Filenames:	*.xml
+MIME types:	application/xml+evoque
+Subclass of the EvoqueLexer that highlights unlexed data with the XmlLexer.
+
+New in Pygments 1.1.
+
+class pygments.lexers.templates.GenshiLexer
+Short names:	genshi, kid, xml+genshi, xml+kid
+Filenames:	*.kid
+MIME types:	application/x-genshi, application/x-kid
+A lexer that highlights genshi and kid kid XML templates.
+
+class pygments.lexers.templates.GenshiTextLexer
+Short names:	genshitext
+Filenames:	None
+MIME types:	application/x-genshi-text, text/x-genshi
+A lexer that highlights genshi text templates.
+
+class pygments.lexers.templates.HtmlDjangoLexer
+Short names:	html+django, html+jinja, htmldjango
+Filenames:	None
+MIME types:	text/html+django, text/html+jinja
+Subclass of the DjangoLexer that highighlights unlexed data with the HtmlLexer.
+
+Nested Javascript and CSS is highlighted too.
+
+class pygments.lexers.templates.HtmlGenshiLexer
+Short names:	html+genshi, html+kid
+Filenames:	None
+MIME types:	text/html+genshi
+A lexer that highlights genshi and kid kid HTML templates.
+
+class pygments.lexers.templates.HtmlPhpLexer
+Short names:	html+php
+Filenames:	*.phtml
+MIME types:	application/x-php, application/x-httpd-php, application/x-httpd-php3, application/x-httpd-php4, application/x-httpd-php5
+Subclass of PhpLexer that highlights unhandled data with the HtmlLexer.
+
+Nested Javascript and CSS is highlighted too.
+
+class pygments.lexers.templates.HtmlSmartyLexer
+Short names:	html+smarty
+Filenames:	None
+MIME types:	text/html+smarty
+Subclass of the SmartyLexer that highighlights unlexed data with the HtmlLexer.
+
+Nested Javascript and CSS is highlighted too.
+
+class pygments.lexers.templates.JavascriptDjangoLexer
+Short names:	js+django, javascript+django, js+jinja, javascript+jinja
+Filenames:	None
+MIME types:	application/x-javascript+django, application/x-javascript+jinja, text/x-javascript+django, text/x-javascript+jinja, text/javascript+django, text/javascript+jinja
+Subclass of the DjangoLexer that highlights unlexed data with the JavascriptLexer.
+
+class pygments.lexers.templates.JavascriptErbLexer
+Short names:	js+erb, javascript+erb, js+ruby, javascript+ruby
+Filenames:	None
+MIME types:	application/x-javascript+ruby, text/x-javascript+ruby, text/javascript+ruby
+Subclass of ErbLexer which highlights unlexed data with the JavascriptLexer.
+
+class pygments.lexers.templates.JavascriptGenshiLexer
+Short names:	js+genshitext, js+genshi, javascript+genshitext, javascript+genshi
+Filenames:	None
+MIME types:	application/x-javascript+genshi, text/x-javascript+genshi, text/javascript+genshi
+A lexer that highlights javascript code in genshi text templates.
+
+class pygments.lexers.templates.JavascriptPhpLexer
+Short names:	js+php, javascript+php
+Filenames:	None
+MIME types:	application/x-javascript+php, text/x-javascript+php, text/javascript+php
+Subclass of PhpLexer which highlights unmatched data with the JavascriptLexer.
+
+class pygments.lexers.templates.JavascriptSmartyLexer
+Short names:	js+smarty, javascript+smarty
+Filenames:	None
+MIME types:	application/x-javascript+smarty, text/x-javascript+smarty, text/javascript+smarty
+Subclass of the SmartyLexer that highlights unlexed data with the JavascriptLexer.
+
+class pygments.lexers.templates.JspLexer
+Short names:	jsp
+Filenames:	*.jsp
+MIME types:	application/x-jsp
+Lexer for Java Server Pages.
+
+New in Pygments 0.7.
+
+class pygments.lexers.templates.LassoCssLexer
+Short names:	css+lasso
+Filenames:	None
+MIME types:	text/css+lasso
+Subclass of the LassoLexer which highlights unhandled data with the CssLexer.
+
+New in Pygments 1.6.
+
+class pygments.lexers.templates.LassoHtmlLexer
+Short names:	html+lasso
+Filenames:	None
+MIME types:	text/html+lasso, application/x-httpd-lasso, application/x-httpd-lasso[89]
+Subclass of the LassoLexer which highlights unhandled data with the HtmlLexer.
+
+Nested JavaScript and CSS is also highlighted.
+
+New in Pygments 1.6.
+
+class pygments.lexers.templates.LassoJavascriptLexer
+Short names:	js+lasso, javascript+lasso
+Filenames:	None
+MIME types:	application/x-javascript+lasso, text/x-javascript+lasso, text/javascript+lasso
+Subclass of the LassoLexer which highlights unhandled data with the JavascriptLexer.
+
+New in Pygments 1.6.
+
+class pygments.lexers.templates.LassoXmlLexer
+Short names:	xml+lasso
+Filenames:	None
+MIME types:	application/xml+lasso
+Subclass of the LassoLexer which highlights unhandled data with the XmlLexer.
+
+New in Pygments 1.6.
+
+class pygments.lexers.templates.MakoCssLexer
+Short names:	css+mako
+Filenames:	None
+MIME types:	text/css+mako
+Subclass of the MakoLexer that highlights unlexer data with the CssLexer.
+
+New in Pygments 0.7.
+
+class pygments.lexers.templates.MakoHtmlLexer
+Short names:	html+mako
+Filenames:	None
+MIME types:	text/html+mako
+Subclass of the MakoLexer that highlights unlexed data with the HtmlLexer.
+
+New in Pygments 0.7.
+
+class pygments.lexers.templates.MakoJavascriptLexer
+Short names:	js+mako, javascript+mako
+Filenames:	None
+MIME types:	application/x-javascript+mako, text/x-javascript+mako, text/javascript+mako
+Subclass of the MakoLexer that highlights unlexer data with the JavascriptLexer.
+
+New in Pygments 0.7.
+
+class pygments.lexers.templates.MakoLexer
+Short names:	mako
+Filenames:	*.mao
+MIME types:	application/x-mako
+Generic mako templates lexer. Code that isn’t Mako markup is yielded as Token.Other.
+
+New in Pygments 0.7.
+
+class pygments.lexers.templates.MakoXmlLexer
+Short names:	xml+mako
+Filenames:	None
+MIME types:	application/xml+mako
+Subclass of the MakoLexer that highlights unlexer data with the XmlLexer.
+
+New in Pygments 0.7.
+
+class pygments.lexers.templates.MasonLexer
+Short names:	mason
+Filenames:	*.m, *.mhtml, *.mc, *.mi, autohandler, dhandler
+MIME types:	application/x-mason
+Generic mason templates lexer. Stolen from Myghty lexer. Code that isn’t Mason markup is HTML.
+
+New in Pygments 1.4.
+
+class pygments.lexers.templates.MyghtyCssLexer
+Short names:	css+myghty
+Filenames:	None
+MIME types:	text/css+myghty
+Subclass of the MyghtyLexer that highlights unlexer data with the CssLexer.
+
+New in Pygments 0.6.
+
+class pygments.lexers.templates.MyghtyHtmlLexer
+Short names:	html+myghty
+Filenames:	None
+MIME types:	text/html+myghty
+Subclass of the MyghtyLexer that highlights unlexer data with the HtmlLexer.
+
+New in Pygments 0.6.
+
+class pygments.lexers.templates.MyghtyJavascriptLexer
+Short names:	js+myghty, javascript+myghty
+Filenames:	None
+MIME types:	application/x-javascript+myghty, text/x-javascript+myghty, text/javascript+mygthy
+Subclass of the MyghtyLexer that highlights unlexer data with the JavascriptLexer.
+
+New in Pygments 0.6.
+
+class pygments.lexers.templates.MyghtyLexer
+Short names:	myghty
+Filenames:	*.myt, autodelegate
+MIME types:	application/x-myghty
+Generic myghty templates lexer. Code that isn’t Myghty markup is yielded as Token.Other.
+
+New in Pygments 0.6.
+
+class pygments.lexers.templates.MyghtyXmlLexer
+Short names:	xml+myghty
+Filenames:	None
+MIME types:	application/xml+myghty
+Subclass of the MyghtyLexer that highlights unlexer data with the XmlLexer.
+
+New in Pygments 0.6.
+
+class pygments.lexers.templates.RhtmlLexer
+Short names:	rhtml, html+erb, html+ruby
+Filenames:	*.rhtml
+MIME types:	text/html+ruby
+Subclass of the ERB lexer that highlights the unlexed data with the html lexer.
+
+Nested Javascript and CSS is highlighted too.
+
+class pygments.lexers.templates.SmartyLexer
+Short names:	smarty
+Filenames:	*.tpl
+MIME types:	application/x-smarty
+Generic Smarty template lexer.
+
+Just highlights smarty code between the preprocessor directives, other data is left untouched by the lexer.
+
+class pygments.lexers.templates.SspLexer
+Short names:	ssp
+Filenames:	*.ssp
+MIME types:	application/x-ssp
+Lexer for Scalate Server Pages.
+
+New in Pygments 1.4.
+
+class pygments.lexers.templates.TeaTemplateLexer
+Short names:	tea
+Filenames:	*.tea
+MIME types:	text/x-tea
+Lexer for Tea Templates.
+
+New in Pygments 1.5.
+
+class pygments.lexers.templates.VelocityHtmlLexer
+Short names:	html+velocity
+Filenames:	None
+MIME types:	text/html+velocity
+Subclass of the VelocityLexer that highlights unlexer data with the HtmlLexer.
+
+class pygments.lexers.templates.VelocityLexer
+Short names:	velocity
+Filenames:	*.vm, *.fhtml
+MIME types:	None
+Generic Velocity template lexer.
+
+Just highlights velocity directives and variable references, other data is left untouched by the lexer.
+
+class pygments.lexers.templates.VelocityXmlLexer
+Short names:	xml+velocity
+Filenames:	None
+MIME types:	application/xml+velocity
+Subclass of the VelocityLexer that highlights unlexer data with the XmlLexer.
+
+class pygments.lexers.templates.XmlDjangoLexer
+Short names:	xml+django, xml+jinja
+Filenames:	None
+MIME types:	application/xml+django, application/xml+jinja
+Subclass of the DjangoLexer that highlights unlexed data with the XmlLexer.
+
+class pygments.lexers.templates.XmlErbLexer
+Short names:	xml+erb, xml+ruby
+Filenames:	None
+MIME types:	application/xml+ruby
+Subclass of ErbLexer which highlights data outside preprocessor directives with the XmlLexer.
+
+class pygments.lexers.templates.XmlPhpLexer
+Short names:	xml+php
+Filenames:	None
+MIME types:	application/xml+php
+Subclass of PhpLexer that higlights unhandled data with the XmlLexer.
+
+class pygments.lexers.templates.XmlSmartyLexer
+Short names:	xml+smarty
+Filenames:	None
+MIME types:	application/xml+smarty
+Subclass of the SmartyLexer that highlights unlexed data with the XmlLexer.
+
+Lexers for non-source code file types
+
+class pygments.lexers.text.ApacheConfLexer
+Short names:	apacheconf, aconf, apache
+Filenames:	.htaccess, apache.conf, apache2.conf
+MIME types:	text/x-apacheconf
+Lexer for configuration files following the Apache config file format.
+
+New in Pygments 0.6.
+
+class pygments.lexers.text.BBCodeLexer
+Short names:	bbcode
+Filenames:	None
+MIME types:	text/x-bbcode
+A lexer that highlights BBCode(-like) syntax.
+
+New in Pygments 0.6.
+
+class pygments.lexers.text.BaseMakefileLexer
+Short names:	basemake
+Filenames:	None
+MIME types:	None
+Lexer for simple Makefiles (no preprocessing).
+
+New in Pygments 0.10.
+
+class pygments.lexers.text.CMakeLexer
+Short names:	cmake
+Filenames:	*.cmake, CMakeLists.txt
+MIME types:	text/x-cmake
+Lexer for CMake files.
+
+New in Pygments 1.2.
+
+class pygments.lexers.text.DarcsPatchLexer
+Short names:	dpatch
+Filenames:	*.dpatch, *.darcspatch
+MIME types:	None
+DarcsPatchLexer is a lexer for the various versions of the darcs patch format. Examples of this format are derived by commands such as darcs annotate --patch and darcs send.
+
+New in Pygments 0.10.
+
+class pygments.lexers.text.DebianControlLexer
+Short names:	control, debcontrol
+Filenames:	control
+MIME types:	None
+Lexer for Debian control files and apt-cache show <pkg> outputs.
+
+New in Pygments 0.9.
+
+class pygments.lexers.text.DiffLexer
+Short names:	diff, udiff
+Filenames:	*.diff, *.patch
+MIME types:	text/x-diff, text/x-patch
+Lexer for unified or context-style diffs or patches.
+
+class pygments.lexers.text.EbnfLexer
+Short names:	ebnf
+Filenames:	*.ebnf
+MIME types:	text/x-ebnf
+Lexer for ISO/IEC 14977 EBNF grammars.
+
+New in Pygments 1.7.
+
+class pygments.lexers.text.GettextLexer
+Short names:	pot, po
+Filenames:	*.pot, *.po
+MIME types:	application/x-gettext, text/x-gettext, text/gettext
+Lexer for Gettext catalog files.
+
+New in Pygments 0.9.
+
+class pygments.lexers.text.GroffLexer
+Short names:	groff, nroff, man
+Filenames:	*.[1234567], *.man
+MIME types:	application/x-troff, text/troff
+Lexer for the (g)roff typesetting language, supporting groff extensions. Mainly useful for highlighting manpage sources.
+
+New in Pygments 0.6.
+
+class pygments.lexers.text.HttpLexer
+Short names:	http
+Filenames:	None
+MIME types:	None
+Lexer for HTTP sessions.
+
+New in Pygments 1.5.
+
+class pygments.lexers.text.HxmlLexer
+Short names:	haxeml, hxml
+Filenames:	*.hxml
+MIME types:	None
+Lexer for haXe build files.
+
+New in Pygments 1.6.
+
+class pygments.lexers.text.IniLexer
+Short names:	ini, cfg, dosini
+Filenames:	*.ini, *.cfg
+MIME types:	text/x-ini
+Lexer for configuration files in INI style.
+
+class pygments.lexers.text.IrcLogsLexer
+Short names:	irc
+Filenames:	*.weechatlog
+MIME types:	text/x-irclog
+Lexer for IRC logs in irssi, xchat or weechat style.
+
+class pygments.lexers.text.LighttpdConfLexer
+Short names:	lighty, lighttpd
+Filenames:	None
+MIME types:	text/x-lighttpd-conf
+Lexer for Lighttpd configuration files.
+
+New in Pygments 0.11.
+
+class pygments.lexers.text.MakefileLexer
+Short names:	make, makefile, mf, bsdmake
+Filenames:	*.mak, *.mk, Makefile, makefile, Makefile.*, GNUmakefile
+MIME types:	text/x-makefile
+Lexer for BSD and GNU make extensions (lenient enough to handle both in the same file even).
+
+Rewritten in Pygments 0.10.
+
+class pygments.lexers.text.MoinWikiLexer
+Short names:	trac-wiki, moin
+Filenames:	None
+MIME types:	text/x-trac-wiki
+For MoinMoin (and Trac) Wiki markup.
+
+New in Pygments 0.7.
+
+class pygments.lexers.text.NginxConfLexer
+Short names:	nginx
+Filenames:	None
+MIME types:	text/x-nginx-conf
+Lexer for Nginx configuration files.
+
+New in Pygments 0.11.
+
+class pygments.lexers.text.PropertiesLexer
+Short names:	properties, jproperties
+Filenames:	*.properties
+MIME types:	text/x-java-properties
+Lexer for configuration files in Java’s properties format.
+
+New in Pygments 1.4.
+
+class pygments.lexers.text.PyPyLogLexer
+Short names:	pypylog, pypy
+Filenames:	*.pypylog
+MIME types:	application/x-pypylog
+Lexer for PyPy log files.
+
+New in Pygments 1.5.
+
+class pygments.lexers.text.RegeditLexer
+Short names:	registry
+Filenames:	*.reg
+MIME types:	text/x-windows-registry
+Lexer for Windows Registry files produced by regedit.
+
+New in Pygments 1.6.
+
+class pygments.lexers.text.RstLexer
+Short names:	rst, rest, restructuredtext
+Filenames:	*.rst, *.rest
+MIME types:	text/x-rst, text/prs.fallenstein.rst
+For reStructuredText markup.
+
+New in Pygments 0.7.
+
+Additional options accepted:
+
+handlecodeblocks
+Highlight the contents of .. sourcecode:: language, .. code:: language and .. code-block:: language directives with a lexer for the given language (default: True). New in Pygments 0.8.
+class pygments.lexers.text.SourcesListLexer
+Short names:	sourceslist, sources.list, debsources
+Filenames:	sources.list
+MIME types:	None
+Lexer that highlights debian sources.list files.
+
+New in Pygments 0.7.
+
+class pygments.lexers.text.SquidConfLexer
+Short names:	squidconf, squid.conf, squid
+Filenames:	squid.conf
+MIME types:	text/x-squidconf
+Lexer for squid configuration files.
+
+New in Pygments 0.9.
+
+class pygments.lexers.text.TexLexer
+Short names:	tex, latex
+Filenames:	*.tex, *.aux, *.toc
+MIME types:	text/x-tex, text/x-latex
+Lexer for the TeX and LaTeX typesetting languages.
+
+class pygments.lexers.text.VimLexer
+Short names:	vim
+Filenames:	*.vim, .vimrc, .exrc, .gvimrc, vimrc, exrc, gvimrc, vimrc, gvimrc
+MIME types:	text/x-vim
+Lexer for VimL script files.
+
+New in Pygments 0.8.
+
+class pygments.lexers.text.YamlLexer
+Short names:	yaml
+Filenames:	*.yaml, *.yml
+MIME types:	text/x-yaml
+Lexer for YAML, a human-friendly data serialization language.
+
+New in Pygments 0.11.
+
+Lexers for web-related languages and markup
+
+class pygments.lexers.web.ActionScript3Lexer
+Short names:	as3, actionscript3
+Filenames:	*.as
+MIME types:	application/x-actionscript, text/x-actionscript, text/actionscript
+For ActionScript 3 source code.
+
+New in Pygments 0.11.
+
+class pygments.lexers.web.ActionScriptLexer
+Short names:	as, actionscript
+Filenames:	*.as
+MIME types:	application/x-actionscript3, text/x-actionscript3, text/actionscript3
+For ActionScript source code.
+
+New in Pygments 0.9.
+
+class pygments.lexers.web.CirruLexer
+Short names:	cirru
+Filenames:	*.cirru
+MIME types:	text/x-cirru
+Syntax rules of Cirru can be found at: http://grammar.cirru.org/
+
+using () to markup blocks, but limited in the same line
+using "" to markup strings, allow \ to escape
+using $ as a shorthand for () till indentation end or )
+using indentations for create nesting
+New in Pygments 1.7.
+
+class pygments.lexers.web.CoffeeScriptLexer
+Short names:	coffee-script, coffeescript, coffee
+Filenames:	*.coffee
+MIME types:	text/coffeescript
+For CoffeeScript source code.
+
+New in Pygments 1.3.
+
+class pygments.lexers.web.CssLexer
+Short names:	css
+Filenames:	*.css
+MIME types:	text/css
+For CSS (Cascading Style Sheets).
+
+class pygments.lexers.web.DartLexer
+Short names:	dart
+Filenames:	*.dart
+MIME types:	text/x-dart
+For Dart source code.
+
+New in Pygments 1.5.
+
+class pygments.lexers.web.DtdLexer
+Short names:	dtd
+Filenames:	*.dtd
+MIME types:	application/xml-dtd
+A lexer for DTDs (Document Type Definitions).
+
+New in Pygments 1.5.
+
+class pygments.lexers.web.DuelLexer
+Short names:	duel, jbst, jsonml+bst
+Filenames:	*.duel, *.jbst
+MIME types:	text/x-duel, text/x-jbst
+Lexer for Duel Views Engine (formerly JBST) markup with JavaScript code blocks. See http://duelengine.org/. See http://jsonml.org/jbst/.
+
+New in Pygments 1.4.
+
+class pygments.lexers.web.HamlLexer
+Short names:	haml
+Filenames:	*.haml
+MIME types:	text/x-haml
+For Haml markup.
+
+New in Pygments 1.3.
+
+class pygments.lexers.web.HaxeLexer
+Short names:	hx, haxe, hxsl
+Filenames:	*.hx, *.hxsl
+MIME types:	text/haxe, text/x-haxe, text/x-hx
+For Haxe source code (http://haxe.org/).
+
+New in Pygments 1.3.
+
+class pygments.lexers.web.HtmlLexer
+Short names:	html
+Filenames:	*.html, *.htm, *.xhtml, *.xslt
+MIME types:	text/html, application/xhtml+xml
+For HTML 4 and XHTML 1 markup. Nested JavaScript and CSS is highlighted by the appropriate lexer.
+
+class pygments.lexers.web.JadeLexer
+Short names:	jade
+Filenames:	*.jade
+MIME types:	text/x-jade
+For Jade markup. Jade is a variant of Scaml, see: http://scalate.fusesource.org/documentation/scaml-reference.html
+
+New in Pygments 1.4.
+
+class pygments.lexers.web.JavascriptLexer
+Short names:	js, javascript
+Filenames:	*.js
+MIME types:	application/javascript, application/x-javascript, text/x-javascript, text/javascript
+For JavaScript source code.
+
+class pygments.lexers.web.JsonLexer
+Short names:	json
+Filenames:	*.json
+MIME types:	application/json
+For JSON data structures.
+
+New in Pygments 1.5.
+
+class pygments.lexers.web.KalLexer
+Short names:	kal
+Filenames:	*.kal
+MIME types:	text/kal, application/kal
+For Kal source code.
+
+New in Pygments 1.7.
+
+class pygments.lexers.web.LassoLexer
+Short names:	lasso, lassoscript
+Filenames:	*.lasso, *.lasso[89]
+MIME types:	text/x-lasso
+For Lasso source code, covering both Lasso 9 syntax and LassoScript for Lasso 8.6 and earlier. For Lasso embedded in HTML, use the LassoHtmlLexer.
+
+Additional options accepted:
+
+builtinshighlighting
+If given and True, highlight builtin types, traits, methods, and members (default: True).
+requiredelimiters
+If given and True, only highlight code between delimiters as Lasso (default: False).
+New in Pygments 1.6.
+
+class pygments.lexers.web.LiveScriptLexer
+Short names:	live-script, livescript
+Filenames:	*.ls
+MIME types:	text/livescript
+For LiveScript source code.
+
+New in Pygments 1.6.
+
+class pygments.lexers.web.MxmlLexer
+Short names:	mxml
+Filenames:	*.mxml
+MIME types:	None
+For MXML markup. Nested AS3 in <script> tags is highlighted by the appropriate lexer.
+
+New in Pygments 1.1.
+
+class pygments.lexers.web.ObjectiveJLexer
+Short names:	objective-j, objectivej, obj-j, objj
+Filenames:	*.j
+MIME types:	text/x-objective-j
+For Objective-J source code with preprocessor directives.
+
+New in Pygments 1.3.
+
+class pygments.lexers.web.PhpLexer
+Short names:	php, php3, php4, php5
+Filenames:	*.php, *.php[345], *.inc
+MIME types:	text/x-php
+For PHP source code. For PHP embedded in HTML, use the HtmlPhpLexer.
+
+Additional options accepted:
+
+startinline
+If given and True the lexer starts highlighting with php code (i.e.: no starting <?php required). The default is False.
+funcnamehighlighting
+If given and True, highlight builtin function names (default: True).
+disabledmodules
+If given, must be a list of module names whose function names should not be highlighted. By default all modules are highlighted except the special 'unknown' module that includes functions that are known to php but are undocumented.
+
+To get a list of allowed modules have a look into the _phpbuiltins module:
+
+>>> from pygments.lexers._phpbuiltins import MODULES
+>>> MODULES.keys()
+['PHP Options/Info', 'Zip', 'dba', ...]
+In fact the names of those modules match the module names from the php documentation.
+
+class pygments.lexers.web.QmlLexer
+Short names:	qml
+Filenames:	*.qml
+MIME types:	application/x-qml
+For QML files. See http://doc.qt.digia.com/4.7/qdeclarativeintroduction.html.
+
+New in Pygments 1.6.
+
+class pygments.lexers.web.SassLexer
+Short names:	sass
+Filenames:	*.sass
+MIME types:	text/x-sass
+For Sass stylesheets.
+
+New in Pygments 1.3.
+
+class pygments.lexers.web.ScamlLexer
+Short names:	scaml
+Filenames:	*.scaml
+MIME types:	text/x-scaml
+For Scaml markup. Scaml is Haml for Scala.
+
+New in Pygments 1.4.
+
+class pygments.lexers.web.ScssLexer
+Short names:	scss
+Filenames:	*.scss
+MIME types:	text/x-scss
+For SCSS stylesheets.
+
+class pygments.lexers.web.TypeScriptLexer
+Short names:	ts
+Filenames:	*.ts
+MIME types:	text/x-typescript
+For TypeScript source code.
+
+New in Pygments 1.6.
+
+class pygments.lexers.web.XQueryLexer
+Short names:	xquery, xqy, xq, xql, xqm
+Filenames:	*.xqy, *.xquery, *.xq, *.xql, *.xqm
+MIME types:	text/xquery, application/xquery
+An XQuery lexer, parsing a stream and outputting the tokens needed to highlight xquery code.
+
+New in Pygments 1.4.
+
+class pygments.lexers.web.XmlLexer
+Short names:	xml
+Filenames:	*.xml, *.xsl, *.rss, *.xslt, *.xsd, *.wsdl, *.wsf
+MIME types:	text/xml, application/xml, image/svg+xml, application/rss+xml, application/atom+xml
+Generic lexer for XML (eXtensible Markup Language).
+
+class pygments.lexers.web.XsltLexer
+Short names:	xslt
+Filenames:	*.xsl, *.xslt, *.xpl
+MIME types:	application/xsl+xml, application/xslt+xml
+A lexer for XSLT.
+
+New in Pygments 0.10.
